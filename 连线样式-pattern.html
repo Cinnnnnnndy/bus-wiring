@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>连线样式 Pattern 参考 · 昇腾超节点互联</title>
+<title>连线样式 Pattern 参考</title>
 <style>
   :root{
     /* 浅色（默认）。深色见 :root[data-theme="dark"]，仅覆盖背景/文字/描边； */
@@ -13,12 +13,23 @@
     --npu:#0c9980; --cpu:#2563d8; --sw:#c07a0f; --d2d:#d0386e; --dp:#7050c0;
     --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
     --sans:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    /* 样片画布 / 场景表面 — 随主题切换；强调线色保持恒定。 */
+    --preview:#e8ecf3; --scene:#e6ebf2;
+    --scene-grid:rgba(10,25,60,.07); --scene-fab:rgba(10,25,60,.05);
+    --casing:rgba(12,20,45,.13); --svg-ink:#1c2333; --svg-ink3:#7c879b;
   }
   :root[data-theme="dark"]{
     --bg:#0f1623;  --panel:#182030;  --panel2:#111b2b;  --panel3:#0c1520;
     --ink:#dce8f8; --ink2:#8ea4c0;   --ink3:#4a6480;
     --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.13);
+    --preview:#171f30; --scene:#0f1928;
+    --scene-grid:rgba(255,255,255,.06); --scene-fab:rgba(255,255,255,.045);
+    --casing:rgba(255,255,255,.72); --svg-ink:#dce8f8; --svg-ink3:#8ea4c0;
   }
+  /* 让样片 SVG 里写死的白色 casing / 深色文字也跟随主题（CSS 规则优先级高于 SVG 呈现属性）。 */
+  .card-preview line[stroke^="rgba(255,255,255"], .bw-scale line[stroke^="rgba(255,255,255"]{ stroke:var(--casing); }
+  .card-preview text[fill="#8896aa"], .bw-scale text[fill="#8896aa"]{ fill:var(--svg-ink3); }
+  .bw-scale text[fill="#1c2333"]{ fill:var(--svg-ink); }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{background:var(--bg); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased; min-height:100vh; transition:background .25s ease,color .25s ease;}
 
@@ -66,7 +77,9 @@
     background:var(--panel2); display:flex; align-items:center; justify-content:center;
     padding:22px 16px; border-bottom:1px solid var(--line); min-height:90px;
   }
-  .card-preview.dark{background:#1a2035;}
+  .card-preview.dark{background:var(--preview);}
+  /* §8 的 3D 发光管线样片靠暗底才读得清，固定深色画布，不随主题切到浅色。 */
+  .card-preview.preview-3d{background:radial-gradient(120% 120% at 50% 0%, #18223a 0%, #0b0f1a 70%);}
   .card-body{padding:14px 16px; display:flex; flex-direction:column; gap:8px;}
   .card-name{font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px;}
   .card-name .en{font-family:var(--mono); font-size:9.5px; color:var(--ink3); font-weight:400;}
@@ -110,11 +123,11 @@
 
   /* ── 等距实战 ── */
   .iso-wrap{border:1px solid var(--line); border-radius:13px; overflow:hidden;}
-  .iso-key{display:grid; grid-template-columns:repeat(5,1fr); gap:0; background:#0f1928; border-top:1px solid rgba(255,255,255,.08); padding:14px 20px;}
+  .iso-key{display:grid; grid-template-columns:repeat(5,1fr); gap:0; background:var(--scene); border-top:1px solid var(--line); padding:14px 20px;}
   .iso-key-item{display:flex; align-items:center; gap:9px; padding:3px 0;}
   .iso-key-item .lv{display:block; width:46px; flex:none;}
-  .iso-key-item .lt{font-family:var(--mono); font-size:10px; color:#8ea4c0; line-height:1.5;}
-  .iso-key-item .lt b{display:block; color:#c8d8ef; font-size:10.5px;}
+  .iso-key-item .lt{font-family:var(--mono); font-size:10px; color:var(--svg-ink3); line-height:1.5;}
+  .iso-key-item .lt b{display:block; color:var(--svg-ink); font-size:10.5px;}
 </style>
 </head>
 <body>
@@ -122,7 +135,7 @@
 <header>
   <div class="dot"></div>
   <h1>连线样式 Pattern 参考 · 统一版</h1>
-  <div class="sub">昇腾超节点互联 2D 语义线 + bus-wiring 3D 管线 · 单一参考</div>
+  <div class="sub">节点互联拓扑 2D 语义线 + bus-wiring 3D 管线 · 单一参考</div>
   <div class="spacer"></div>
   <button class="hbadge" id="theme-toggle" type="button">☾ 深色</button>
   <div class="hbadge">v3 · 2026-06</div>
@@ -156,17 +169,17 @@
     <div class="rule-card">
       <h4><span class="icon" style="background:rgba(12,153,128,.12);color:#0c9980">━</span>粗细 → 带宽</h4>
       <div class="rule-item"><span>D2D 784 GB/s</span><b>~8.5 px</b></div>
-      <div class="rule-item"><span>LQC 167 GB/s</span><b>~5.8 px</b></div>
-      <div class="rule-item"><span>UB 164 GB/s</span><b>~5.7 px</b></div>
-      <div class="rule-item"><span>UBoE 100 GB/s</span><b>~5.0 px</b></div>
+      <div class="rule-item"><span>短距 167 GB/s</span><b>~5.8 px</b></div>
+      <div class="rule-item"><span>光纤 164 GB/s</span><b>~5.7 px</b></div>
+      <div class="rule-item"><span>长距光 100 GB/s</span><b>~5.0 px</b></div>
       <div class="rule-item"><span>公式</span><b>log10(bw/10)×3.8, min 1.5</b></div>
     </div>
     <div class="rule-card">
       <h4><span class="icon" style="background:rgba(37,99,216,.12);color:#2563d8">⟶</span>速度 → 时延</h4>
       <div class="rule-item"><span>D2D &lt; 10 ns</span><b>0.4 s/圈</b></div>
-      <div class="rule-item"><span>LQC &lt; 100 ns</span><b>0.8 s/圈</b></div>
-      <div class="rule-item"><span>UB &lt; 1 µs</span><b>1.4 s/圈</b></div>
-      <div class="rule-item"><span>UBoE 3–7 µs</span><b>2.8 s/圈</b></div>
+      <div class="rule-item"><span>短距 &lt; 100 ns</span><b>0.8 s/圈</b></div>
+      <div class="rule-item"><span>光纤 &lt; 1 µs</span><b>1.4 s/圈</b></div>
+      <div class="rule-item"><span>长距光 3–7 µs</span><b>2.8 s/圈</b></div>
       <div class="rule-item"><span>公式</span><b>latDur = delay×scale</b></div>
     </div>
     <div class="rule-card">
@@ -191,7 +204,7 @@
 
   <div class="grid">
 
-    <!-- 2-1 铜缆 LQC / 实线 sparse -->
+    <!-- 2-1 铜缆 短距 / 实线 sparse -->
     <div class="card">
       <div class="card-preview dark">
         <svg width="280" height="60" style="overflow:visible">
@@ -212,22 +225,22 @@
         </svg>
       </div>
       <div class="card-body">
-        <div class="card-name">铜缆 LQC · 稀疏模式 <span class="en">copper / sparse</span></div>
+        <div class="card-name">铜缆 短距 · 稀疏模式 <span class="en">copper / sparse</span></div>
         <div class="card-desc">节点数 ≤30 时使用。白色衬底 (casing) 确保连线在同色节点顶面也清晰浮起。光点流动速率编码时延。</div>
         <div class="params">
           <div class="param"><span class="k">stroke</span><span class="v">shade(trafficColor, +0.32)</span></div>
-          <div class="param"><span class="k">stroke-width</span><span class="v">wForBw(bw) · LQC≈5.8px</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">wForBw(bw) · 短距≈5.8px</span></div>
           <div class="param"><span class="k">stroke-linecap</span><span class="v">round</span></div>
           <div class="param"><span class="k">filter</span><span class="v">url(#glow) · blur=2.6</span></div>
           <div class="param"><span class="k">casing</span><span class="v">rgba(255,255,255,.72) · w+4px</span></div>
           <div class="param"><span class="k">flow dot r</span><span class="v">max(2.2, w×0.55)</span></div>
           <div class="param"><span class="k">flow dur</span><span class="v">latDur(L) s/圈</span></div>
         </div>
-        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-a">L1 LQC</span></div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-a">L1 铜缆</span></div>
       </div>
     </div>
 
-    <!-- 2-2 光纤 UB optical -->
+    <!-- 2-2 光纤 中距 -->
     <div class="card">
       <div class="card-preview dark">
         <svg width="280" height="60" style="overflow:visible">
@@ -245,20 +258,20 @@
         </svg>
       </div>
       <div class="card-body">
-        <div class="card-name">光纤 UB · 光纤中距 <span class="en">optical / UB-Fabric</span></div>
-        <div class="card-desc">柜内 / 超节点内 FullMesh。虚线表征光纤介质（与铜缆实线区分）。虚线节奏 7+5 比铜缆更疏朗。</div>
+        <div class="card-name">光纤 中距 · 中距光互联 <span class="en">optical / fabric</span></div>
+        <div class="card-desc">柜内 / 域内 FullMesh。虚线表征光纤介质（与铜缆实线区分）。虚线节奏 7+5 比铜缆更疏朗。</div>
         <div class="params">
           <div class="param"><span class="k">stroke-dasharray</span><span class="v">7 5</span></div>
-          <div class="param"><span class="k">stroke-width</span><span class="v">wForBw(bw) · UB≈5.7px</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">wForBw(bw) · 光纤≈5.7px</span></div>
           <div class="param"><span class="k">filter</span><span class="v">url(#glow) · blur=2.6</span></div>
           <div class="param"><span class="k">opacity</span><span class="v">credOpacity(cred)</span></div>
           <div class="param"><span class="k">flow dur</span><span class="v">1.4 s/圈</span></div>
         </div>
-        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-ac">L2/L3 UB</span></div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-ac">L2/L3 光纤</span></div>
       </div>
     </div>
 
-    <!-- 2-3 全光长距 UBoE opticalLong -->
+    <!-- 2-3 全光长距 opticalLong -->
     <div class="card">
       <div class="card-preview dark">
         <svg width="280" height="60" style="overflow:visible">
@@ -276,15 +289,15 @@
         </svg>
       </div>
       <div class="card-body">
-        <div class="card-name">全光长距 UBoE <span class="en">opticalLong / cross-pod</span></div>
-        <div class="card-desc">超节点间集群互联。更稀疏的虚线节奏 4+7 暗示更长的物理距离。opacity=0.75 表示 B 级可信度（交叉验证）。流动最慢。</div>
+        <div class="card-name">全光长距 <span class="en">opticalLong / cross-pod</span></div>
+        <div class="card-desc">跨域集群互联。更稀疏的虚线节奏 4+7 暗示更长的物理距离。opacity=0.75 表示 B 级可信度（交叉验证）。流动最慢。</div>
         <div class="params">
           <div class="param"><span class="k">stroke-dasharray</span><span class="v">4 7 （更稀疏）</span></div>
           <div class="param"><span class="k">stroke-width</span><span class="v">wForBw(100) ≈ 5.0 px</span></div>
           <div class="param"><span class="k">opacity</span><span class="v">0.75 (credOpacity B)</span></div>
           <div class="param"><span class="k">flow dur</span><span class="v">2.8 s/圈 · 最慢</span></div>
         </div>
-        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-b">L4 UBoE</span></div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-b">L4 长距光</span></div>
       </div>
     </div>
 
@@ -448,7 +461,7 @@
       </div>
     </div>
 
-    <!-- 3-3 48TB 地址带 -->
+    <!-- 3-3 统一编址 地址带 -->
     <div class="card">
       <div class="card-preview dark">
         <svg width="280" height="80" style="overflow:visible">
@@ -464,12 +477,12 @@
             </linearGradient>
           </defs>
           <line x1="20" y1="44" x2="260" y2="44" stroke="url(#bg1)" stroke-width="6" stroke-linecap="round" filter="url(#gb)" opacity=".92"></line>
-          <text x="140" y="64" text-anchor="middle" font-family="monospace" font-size="9" fill="#8896aa">48 TB 统一编址 · 一条连续地址带</text>
+          <text x="140" y="64" text-anchor="middle" font-family="monospace" font-size="9" fill="#8896aa">统一编址空间 · 一条连续地址带</text>
         </svg>
       </div>
       <div class="card-body">
-        <div class="card-name">48TB 统一编址带 <span class="en">address band</span></div>
-        <div class="card-desc">横跨所有 NPU 的渐变发光带，代表 NPU 集群共享的统一地址空间。三色渐变（绿→蓝→紫）引用节点/交换/流量三色。</div>
+        <div class="card-name">统一编址带 <span class="en">address band</span></div>
+        <div class="card-desc">横跨所有节点的渐变发光带，代表节点集群共享的统一地址空间。三色渐变（绿→蓝→紫）引用节点/交换/流量三色。</div>
         <div class="params">
           <div class="param"><span class="k">stroke</span><span class="v">url(#bandgrad) 绿→蓝→紫</span></div>
           <div class="param"><span class="k">stroke-width</span><span class="v">6 px</span></div>
@@ -504,18 +517,18 @@
               <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
             </filter>
           </defs>
-          <!-- NPU 色块 -->
+          <!-- 节点色块 -->
           <rect x="30" y="20" width="50" height="30" rx="4" fill="#0c9980" opacity=".9"></rect>
-          <text x="55" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">NPU 1</text>
+          <text x="55" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">节点 1</text>
           <rect x="200" y="20" width="50" height="30" rx="4" fill="#0c9980" opacity=".9"></rect>
-          <text x="225" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">NPU 5</text>
+          <text x="225" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">节点 5</text>
           <!-- D2D 连线 -->
           <line x1="80" y1="35" x2="200" y2="35" stroke="#d0386e" stroke-width="2.4" filter="url(#gv1)" opacity=".85"></line>
         </svg>
       </div>
       <div class="card-body">
         <div class="card-name">节点视图 D2D <span class="en">Node View · die-to-die</span></div>
-        <div class="card-desc">节点视图等距投影中，连接同列上下对 NPU（die pair）。浅色背景上用 vglow 保持发光感。</div>
+        <div class="card-desc">节点视图等距投影中，连接同列上下对 节点（die pair）。浅色背景上用 vglow 保持发光感。</div>
         <div class="params">
           <div class="param"><span class="k">stroke</span><span class="v">#d0386e</span></div>
           <div class="param"><span class="k">stroke-width</span><span class="v">2.4 px</span></div>
@@ -526,20 +539,20 @@
       </div>
     </div>
 
-    <!-- 4-2 节点视图 LQC -->
+    <!-- 4-2 节点视图 铜缆 -->
     <div class="card">
       <div class="card-preview">
         <svg width="280" height="70">
           <rect x="30" y="20" width="50" height="30" rx="4" fill="#0c9980" opacity=".9"></rect>
-          <text x="55" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">NPU</text>
+          <text x="55" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">节点</text>
           <rect x="200" y="18" width="60" height="34" rx="4" fill="#c07a0f" opacity=".9"></rect>
-          <text x="230" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">UB Fabric</text>
+          <text x="230" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">交换 Fabric</text>
           <line x1="80" y1="35" x2="200" y2="35" stroke="#2563d8" stroke-width="1.2" opacity=".35"></line>
         </svg>
       </div>
       <div class="card-body">
-        <div class="card-name">节点视图 LQC <span class="en">Node View · copper</span></div>
-        <div class="card-desc">NPU → UB Fabric 星形全互联。opacity 极低（0.35）作为辅助结构线，不抢 D2D 视觉焦点。不加 glow。</div>
+        <div class="card-name">节点视图 铜缆 <span class="en">Node View · copper</span></div>
+        <div class="card-desc">节点 → 交换 Fabric 星形全互联。opacity 极低（0.35）作为辅助结构线，不抢 D2D 视觉焦点。不加 glow。</div>
         <div class="params">
           <div class="param"><span class="k">stroke</span><span class="v">#2563d8</span></div>
           <div class="param"><span class="k">stroke-width</span><span class="v">1.2 px</span></div>
@@ -550,7 +563,7 @@
       </div>
     </div>
 
-    <!-- 4-3 机柜视图 LQC 竖线 -->
+    <!-- 4-3 机柜视图 铜缆 竖线 -->
     <div class="card">
       <div class="card-preview">
         <svg width="280" height="100">
@@ -558,14 +571,14 @@
           <text x="140" y="27" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">节点 2</text>
           <rect x="100" y="42" width="80" height="24" rx="4" fill="#0c9980"></rect>
           <text x="140" y="59" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">节点 1</text>
-          <!-- LQC 竖线 -->
+          <!-- 短距 竖线 -->
           <line x1="198" y1="22" x2="198" y2="42" stroke="#2563d8" stroke-width="2.2" stroke-linecap="round" opacity=".6"></line>
-          <text x="210" y="36" font-family="monospace" font-size="9" fill="#2563d8">LQC</text>
+          <text x="210" y="36" font-family="monospace" font-size="9" fill="#2563d8">短距</text>
         </svg>
       </div>
       <div class="card-body">
-        <div class="card-name">机柜视图 LQC 竖线 <span class="en">Rack View · node connector</span></div>
-        <div class="card-desc">机柜正面图节点行之间右侧的竖向连线，表示节点间通过 LQC 铜缆互联。opacity 0.6 为辅助结构线。</div>
+        <div class="card-name">机柜视图 铜缆 竖线 <span class="en">Rack View · node connector</span></div>
+        <div class="card-desc">机柜正面图节点行之间右侧的竖向连线，表示节点间通过 短距 铜缆互联。opacity 0.6 为辅助结构线。</div>
         <div class="params">
           <div class="param"><span class="k">stroke</span><span class="v">#2563d8</span></div>
           <div class="param"><span class="k">stroke-width</span><span class="v">2.2 px</span></div>
@@ -586,9 +599,9 @@
           <text x="196" y="44" font-family="monospace" font-size="10.5" fill="#0c9980">8 × 计算节点</text>
 
           <rect x="40" y="56" width="100" height="16" rx="4" fill="#c07a0f"></rect>
-          <text x="90" y="68" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#7a4e0a">UB 交换</text>
+          <text x="90" y="68" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#7a4e0a">交换</text>
           <line x1="140" y1="64" x2="190" y2="64" stroke="#c07a0f" stroke-width="1" stroke-dasharray="3 2" opacity=".7"></line>
-          <text x="196" y="68" font-family="monospace" font-size="10.5" fill="#c07a0f">UB 交换</text>
+          <text x="196" y="68" font-family="monospace" font-size="10.5" fill="#c07a0f">交换</text>
         </svg>
       </div>
       <div class="card-body">
@@ -609,16 +622,16 @@
       <div class="card-preview">
         <svg width="280" height="80">
           <rect x="40" y="10" width="200" height="24" rx="6" fill="#fff" stroke="#3d9954" stroke-width="1.5"></rect>
-          <text x="140" y="27" text-anchor="middle" font-family="monospace" font-size="9" fill="#3d9954">L4 · 超节点间</text>
+          <text x="140" y="27" text-anchor="middle" font-family="monospace" font-size="9" fill="#3d9954">L4 · 跨域</text>
           <!-- 层间虚线 -->
           <line x1="140" y1="34" x2="140" y2="46" stroke="rgba(0,15,50,.18)" stroke-width="1.5" stroke-dasharray="3 2"></line>
           <rect x="40" y="46" width="200" height="24" rx="6" fill="#fff" stroke="#c07a0f" stroke-width="1.5"></rect>
-          <text x="140" y="63" text-anchor="middle" font-family="monospace" font-size="9" fill="#c07a0f">L3 · 超节点 Clos</text>
+          <text x="140" y="63" text-anchor="middle" font-family="monospace" font-size="9" fill="#c07a0f">L3 · 域内 Clos</text>
         </svg>
       </div>
       <div class="card-body">
         <div class="card-name">层间分隔虚线 <span class="en">topology layer separator</span></div>
-        <div class="card-desc">UB 互联层级视图中，相邻层卡片之间的连接线。中性深色低调，仅传达「上下封装」关系，不代表物理连线。</div>
+        <div class="card-desc">互联层级视图中，相邻层卡片之间的连接线。中性深色低调，仅传达「上下封装」关系，不代表物理连线。</div>
         <div class="params">
           <div class="param"><span class="k">stroke</span><span class="v">rgba(0,15,50,.18)</span></div>
           <div class="param"><span class="k">stroke-width</span><span class="v">1.5 px</span></div>
@@ -728,24 +741,24 @@
       <text x="10" y="34" font-family="monospace" font-size="9" fill="#8896aa">784 GB/s</text>
       <text x="630" y="30" font-family="monospace" font-size="10.5" fill="#1c2333" font-weight="600">8.5 px</text>
 
-      <!-- LQC 167 GB/s → 5.8px -->
+      <!-- 短距 167 GB/s → 5.8px -->
       <line x1="160" y1="72" x2="620" y2="72" stroke="rgba(255,255,255,.72)" stroke-width="9.8" stroke-linecap="round"></line>
       <line x1="160" y1="72" x2="620" y2="72" stroke="#2563d8" stroke-width="5.8" stroke-linecap="round" filter="url(#gbw)"></line>
-      <text x="10" y="68" font-family="monospace" font-size="10.5" fill="#2563d8">LQC</text>
+      <text x="10" y="68" font-family="monospace" font-size="10.5" fill="#2563d8">短距</text>
       <text x="10" y="80" font-family="monospace" font-size="9" fill="#8896aa">167 GB/s</text>
       <text x="630" y="76" font-family="monospace" font-size="10.5" fill="#1c2333" font-weight="600">5.8 px</text>
 
-      <!-- UB 164 GB/s → 5.7px -->
+      <!-- 光纤 164 GB/s → 5.7px -->
       <line x1="160" y1="116" x2="620" y2="116" stroke="rgba(255,255,255,.72)" stroke-width="9.7" stroke-linecap="round"></line>
       <line x1="160" y1="116" x2="620" y2="116" stroke="#7050c0" stroke-width="5.7" stroke-linecap="round" stroke-dasharray="7 5" filter="url(#gbw)"></line>
-      <text x="10" y="112" font-family="monospace" font-size="10.5" fill="#7050c0">UB Mesh</text>
+      <text x="10" y="112" font-family="monospace" font-size="10.5" fill="#7050c0">光纤 Mesh</text>
       <text x="10" y="124" font-family="monospace" font-size="9" fill="#8896aa">164 GB/s</text>
       <text x="630" y="120" font-family="monospace" font-size="10.5" fill="#1c2333" font-weight="600">5.7 px</text>
 
-      <!-- UBoE 100 GB/s → 5.0px -->
+      <!-- 长距光 100 GB/s → 5.0px -->
       <line x1="160" y1="158" x2="620" y2="158" stroke="rgba(255,255,255,.72)" stroke-width="9.0" stroke-linecap="round"></line>
       <line x1="160" y1="158" x2="620" y2="158" stroke="#3d9954" stroke-width="5.0" stroke-linecap="round" stroke-dasharray="4 7" filter="url(#gbw)" opacity=".75"></line>
-      <text x="10" y="154" font-family="monospace" font-size="10.5" fill="#3d9954">UBoE</text>
+      <text x="10" y="154" font-family="monospace" font-size="10.5" fill="#3d9954">长距光</text>
       <text x="10" y="166" font-family="monospace" font-size="9" fill="#8896aa">100 GB/s</text>
       <text x="630" y="162" font-family="monospace" font-size="10.5" fill="#1c2333" font-weight="600">5.0 px</text>
 
@@ -758,7 +771,7 @@
     </svg>
 
     <div style="font-family:var(--mono);font-size:10px;color:var(--ink3);margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
-      实线 = 铜缆 (copper) · 短虚线 7+5 = 光纤 UB (optical) · 稀虚线 4+7 = 全光长距 (opticalLong)
+      实线 = 铜缆 (copper) · 短虚线 7+5 = 光纤 中距 (optical) · 稀虚线 4+7 = 全光长距 (opticalLong)
     </div>
   </div>
 
@@ -820,7 +833,7 @@
 
     <!-- 8-1 Original -->
     <div class="card">
-      <div class="card-preview dark">
+      <div class="card-preview dark preview-3d">
         <svg width="280" height="60" style="overflow:visible">
           <rect x="20" y="28" width="240" height="4.5" rx="2.25" fill="#5AA0FF" opacity="0.6"></rect>
           <!-- 端点：flat stub -->
@@ -851,7 +864,7 @@
 
     <!-- 8-2 Refined / glossy -->
     <div class="card">
-      <div class="card-preview dark">
+      <div class="card-preview dark preview-3d">
         <svg width="280" height="60" style="overflow:visible">
           <defs>
             <linearGradient id="tubeRefined" x1="0" y1="0" x2="0" y2="1">
@@ -889,7 +902,7 @@
 
     <!-- 8-3 Neon -->
     <div class="card">
-      <div class="card-preview dark">
+      <div class="card-preview dark preview-3d">
         <svg width="280" height="60" style="overflow:visible">
           <defs>
             <linearGradient id="tubeNeon" x1="0" y1="0" x2="0" y2="1">
@@ -929,7 +942,7 @@
 
     <!-- 8-4 Clean -->
     <div class="card">
-      <div class="card-preview dark">
+      <div class="card-preview dark preview-3d">
         <svg width="280" height="60" style="overflow:visible">
           <defs>
             <linearGradient id="tubeClean" x1="0" y1="0" x2="0" y2="1">
@@ -966,7 +979,7 @@
 
     <!-- 8-5 调色板 + 分层 -->
     <div class="card">
-      <div class="card-preview dark" style="flex-direction:column;align-items:stretch;gap:0;padding:14px 22px">
+      <div class="card-preview dark preview-3d" style="flex-direction:column;align-items:stretch;gap:0;padding:14px 22px">
         <svg width="100%" height="74" style="overflow:visible" viewBox="0 0 240 74" preserveAspectRatio="none">
           <rect x="0"   y="6"  width="240" height="6" rx="3" fill="#FFB23E"></rect>
           <rect x="0"   y="20" width="240" height="6" rx="3" fill="#5AA0FF"></rect>
@@ -991,7 +1004,7 @@
 
     <!-- 8-6 着色器 uniforms -->
     <div class="card">
-      <div class="card-preview dark" style="padding:16px">
+      <div class="card-preview dark preview-3d" style="padding:16px">
         <pre style="margin:0;font-family:var(--mono);font-size:9.5px;line-height:1.7;color:#9fb3d6;white-space:pre">uShade  圆柱受光明暗
 uRim    边缘菲涅尔轮廓光
 uGloss  顶部高光条
@@ -1043,6 +1056,16 @@ uFlowMix 彗星头提亮程度</pre>
   function pts(arr){ return arr.map(p=>p.X+','+p.Y).join(' '); }
   function line(x1,y1,x2,y2,attrs){ return el('line',{x1,y1,x2,y2,...attrs}); }
 
+  /* 随主题重绘：每次读取当前 CSS 变量，清空后重建场景。 */
+  function draw(){
+  const cs=getComputedStyle(document.documentElement);
+  const SCENE =(cs.getPropertyValue('--scene')||'#0f1928').trim();
+  const GRID  =(cs.getPropertyValue('--scene-grid')||'rgba(255,255,255,.06)').trim();
+  const FAB   =(cs.getPropertyValue('--scene-fab')||'rgba(255,255,255,.045)').trim();
+  const CASING=(cs.getPropertyValue('--casing')||'rgba(255,255,255,.65)').trim();
+  const INK   =(cs.getPropertyValue('--svg-ink')||'#fff').trim();
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+
   /* Defs：glow filter + gradients */
   const defs=el('defs');
   // glow
@@ -1062,18 +1085,18 @@ uFlowMix 彗星头提亮程度</pre>
   svg.appendChild(defs);
 
   /* 背景 */
-  svg.appendChild(el('rect',{width:1060,height:330,fill:'#0f1928'}));
+  svg.appendChild(el('rect',{width:1060,height:330,fill:SCENE}));
 
   /* 地面 */
   const m=2.2;
   const fa=vp(-m,-m,0),fb=vp(m,-m,0),fc=vp(m,m,0),fd=vp(-m,m,0);
-  svg.appendChild(el('polygon',{points:pts([fa,fb,fc,fd]),fill:'rgba(37,99,216,.05)',stroke:'rgba(255,255,255,.07)','stroke-width':1}));
+  svg.appendChild(el('polygon',{points:pts([fa,fb,fc,fd]),fill:'rgba(37,99,216,.05)',stroke:GRID,'stroke-width':1}));
 
   /* 地面网格 */
   const G_floor=el('g'); svg.appendChild(G_floor);
   for(let i=-2;i<=2;i++){
-    const a=vp(i,-m,0),b=vp(i,m,0); G_floor.appendChild(line(a.X,a.Y,b.X,b.Y,{stroke:'rgba(255,255,255,.05)','stroke-width':1}));
-    const c=vp(-m,i,0),d=vp(m,i,0);  G_floor.appendChild(line(c.X,c.Y,d.X,d.Y,{stroke:'rgba(255,255,255,.05)','stroke-width':1}));
+    const a=vp(i,-m,0),b=vp(i,m,0); G_floor.appendChild(line(a.X,a.Y,b.X,b.Y,{stroke:GRID,'stroke-width':1}));
+    const c=vp(-m,i,0),d=vp(m,i,0);  G_floor.appendChild(line(c.X,c.Y,d.X,d.Y,{stroke:GRID,'stroke-width':1}));
   }
 
   /* 等距芯片绘制 */
@@ -1092,19 +1115,19 @@ uFlowMix 彗星头提亮程度</pre>
 
   /* 节点布局: 3列×2行 */
   const NODES=[
-    {gx:-1.5,gy:-0.7,color:'#0c9980',label:'NPU A1'},
-    {gx: 0,  gy:-0.7,color:'#0c9980',label:'NPU A2'},
-    {gx: 1.5,gy:-0.7,color:'#0c9980',label:'NPU A3'},
-    {gx:-1.5,gy: 0.7,color:'#0c9980',label:'NPU B1'},
-    {gx: 0,  gy: 0.7,color:'#0c9980',label:'NPU B2'},
-    {gx: 1.5,gy: 0.7,color:'#10b899',label:'NPU B3',glow:true},
+    {gx:-1.5,gy:-0.7,color:'#0c9980',label:'节点 A1'},
+    {gx: 0,  gy:-0.7,color:'#0c9980',label:'节点 A2'},
+    {gx: 1.5,gy:-0.7,color:'#0c9980',label:'节点 A3'},
+    {gx:-1.5,gy: 0.7,color:'#0c9980',label:'节点 B1'},
+    {gx: 0,  gy: 0.7,color:'#0c9980',label:'节点 B2'},
+    {gx: 1.5,gy: 0.7,color:'#10b899',label:'节点 B3',glow:true},
   ];
 
   /* 背景 Fabric 暗示连线 */
   const G_fab=el('g'); svg.appendChild(G_fab);
   for(let i=0;i<NODES.length;i++) for(let j=i+1;j<NODES.length;j++){
     const a=vp(NODES[i].gx,NODES[i].gy,0.82), b=vp(NODES[j].gx,NODES[j].gy,0.82);
-    G_fab.appendChild(line(a.X,a.Y,b.X,b.Y,{stroke:'rgba(255,255,255,.045)','stroke-width':1}));
+    G_fab.appendChild(line(a.X,a.Y,b.X,b.Y,{stroke:FAB,'stroke-width':1}));
   }
 
   /* 计算节点屏幕坐标 */
@@ -1114,22 +1137,22 @@ uFlowMix 彗星头提亮程度</pre>
   const G_lines=el('g'); svg.appendChild(G_lines);
 
   /* 1. D2D: A1↔A2 (最粗,品红) */
-  G_lines.appendChild(line(centers[0].X,centers[0].Y,centers[1].X,centers[1].Y,{stroke:'rgba(255,255,255,.65)','stroke-width':13,'stroke-linecap':'round'}));
+  G_lines.appendChild(line(centers[0].X,centers[0].Y,centers[1].X,centers[1].Y,{stroke:CASING,'stroke-width':13,'stroke-linecap':'round'}));
   const d2d=line(centers[0].X,centers[0].Y,centers[1].X,centers[1].Y,{stroke:'#d0386e','stroke-width':8.5,'stroke-linecap':'round',filter:'url(#ig)',opacity:1});
   G_lines.appendChild(d2d);
 
-  /* 2. LQC 铜缆 sparse: A2↔A3 (实线+casing+流动光点) */
-  G_lines.appendChild(line(centers[1].X,centers[1].Y,centers[2].X,centers[2].Y,{stroke:'rgba(255,255,255,.65)','stroke-width':10,'stroke-linecap':'round'}));
+  /* 2. 短距 铜缆 sparse: A2↔A3 (实线+casing+流动光点) */
+  G_lines.appendChild(line(centers[1].X,centers[1].Y,centers[2].X,centers[2].Y,{stroke:CASING,'stroke-width':10,'stroke-linecap':'round'}));
   const lqc=line(centers[1].X,centers[1].Y,centers[2].X,centers[2].Y,{stroke:'#4de8c8','stroke-width':5.8,'stroke-linecap':'round',filter:'url(#ig)',opacity:1});
   G_lines.appendChild(lqc);
 
-  /* 3. 光纤 UB optical: A1↔B1 (短虚线7+5) */
-  G_lines.appendChild(line(centers[0].X,centers[0].Y,centers[3].X,centers[3].Y,{stroke:'rgba(255,255,255,.55)','stroke-width':9.7,'stroke-linecap':'round'}));
+  /* 3. 光纤 中距: A1↔B1 (短虚线7+5) */
+  G_lines.appendChild(line(centers[0].X,centers[0].Y,centers[3].X,centers[3].Y,{stroke:CASING,'stroke-width':9.7,'stroke-linecap':'round'}));
   const opt=line(centers[0].X,centers[0].Y,centers[3].X,centers[3].Y,{stroke:'#9b7ce8','stroke-width':5.7,'stroke-linecap':'round','stroke-dasharray':'7 5',filter:'url(#ig)',opacity:1});
   G_lines.appendChild(opt);
 
-  /* 4. 全光 UBoE opticalLong: B2↔B3 (稀虚线4+7,B级透明) */
-  G_lines.appendChild(line(centers[4].X,centers[4].Y,centers[5].X,centers[5].Y,{stroke:'rgba(255,255,255,.5)','stroke-width':9,'stroke-linecap':'round'}));
+  /* 4. 全光 长距 opticalLong: B2↔B3 (稀虚线4+7,B级透明) */
+  G_lines.appendChild(line(centers[4].X,centers[4].Y,centers[5].X,centers[5].Y,{stroke:CASING,'stroke-width':9,'stroke-linecap':'round'}));
   const ubo=line(centers[4].X,centers[4].Y,centers[5].X,centers[5].Y,{stroke:'#4ead6d','stroke-width':5.0,'stroke-linecap':'round','stroke-dasharray':'4 7',filter:'url(#ig)',opacity:0.75});
   G_lines.appendChild(ubo);
 
@@ -1150,19 +1173,19 @@ uFlowMix 彗星头提亮程度</pre>
     d.appendChild(mo); G_flow.appendChild(d);
   }
   flowDot(centers[0].X,centers[0].Y,centers[1].X,centers[1].Y,0.4,4.7,'#1a2a3a'); // D2D 最快
-  flowDot(centers[1].X,centers[1].Y,centers[2].X,centers[2].Y,0.8,3.2,'#1a2a3a'); // LQC
+  flowDot(centers[1].X,centers[1].Y,centers[2].X,centers[2].Y,0.8,3.2,'#1a2a3a'); // 短距
   flowDot(centers[0].X,centers[0].Y,centers[3].X,centers[3].Y,1.4,3.1,'#1a2a3a'); // optical
 
   /* 节点标签 */
   const G_labels=el('g'); svg.appendChild(G_labels);
   NODES.forEach((n,i)=>{
     const p=vp(n.gx,n.gy,0.82);
-    G_labels.appendChild(el('text',{x:p.X,y:p.Y+4,'text-anchor':'middle','font-family':'var(--mono)','font-size':9.5,fill:'#fff','font-weight':600},n.label));
+    G_labels.appendChild(el('text',{x:p.X,y:p.Y+4,'text-anchor':'middle','font-family':'var(--mono)','font-size':9.5,fill:INK,'font-weight':600},n.label));
   });
 
   /* 连线标注气泡 */
   function badge(x,y,text,color,dark){
-    const bg2=dark?'#0f1928':'rgba(255,255,255,.92)';
+    const bg2=SCENE;
     const g=el('g');
     const r=el('rect',{x:x-4,y:y-13,width:text.length*7+8,height:18,rx:5,fill:bg2,stroke:color,'stroke-width':1.2});
     const t=el('text',{x:x+text.length*3.5,y:y,'text-anchor':'middle','font-family':'var(--mono)','font-size':10,'font-weight':700,fill:color},text);
@@ -1174,30 +1197,34 @@ uFlowMix 彗星头提亮程度</pre>
   const optMid={ X:(centers[0].X+centers[3].X)/2-20, Y:(centers[0].Y+centers[3].Y)/2 };
   const uboMid={ X:(centers[4].X+centers[5].X)/2, Y:(centers[4].Y+centers[5].Y)/2-14 };
   badge(d2dMid.X, d2dMid.Y,'D2D 8.5px','#d0386e',true);
-  badge(lqcMid.X, lqcMid.Y,'LQC 5.8px','#4de8c8',true);
-  badge(optMid.X, optMid.Y,'UB optical','#9b7ce8',true);
-  badge(uboMid.X, uboMid.Y,'UBoE 0.75op','#4ead6d',true);
+  badge(lqcMid.X, lqcMid.Y,'铜缆 5.8px','#4de8c8',true);
+  badge(optMid.X, optMid.Y,'光纤 中距','#9b7ce8',true);
+  badge(uboMid.X, uboMid.Y,'长距 0.75op','#4ead6d',true);
 
   /* 图例 key */
   const key=document.getElementById('iso-key');
   if(key){
+    key.innerHTML='';
     const items=[
       {label:'D2D 片内',sub:'8.5px · 实线 · #d0386e · dur 0.4s',sw:8.5,color:'#d0386e',dash:''},
-      {label:'LQC 铜缆',sub:'5.8px · 实线+casing · dur 0.8s',sw:5.8,color:'#4de8c8',dash:''},
-      {label:'光纤 UB',sub:'5.7px · dasharray 7 5 · dur 1.4s',sw:5.7,color:'#9b7ce8',dash:'7 5'},
-      {label:'全光 UBoE',sub:'5.0px · dasharray 4 7 · op 0.75',sw:5.0,color:'#4ead6d',dash:'4 7'},
+      {label:'短距 铜缆',sub:'5.8px · 实线+casing · dur 0.8s',sw:5.8,color:'#4de8c8',dash:''},
+      {label:'光纤 中距',sub:'5.7px · dasharray 7 5 · dur 1.4s',sw:5.7,color:'#9b7ce8',dash:'7 5'},
+      {label:'全光 长距',sub:'5.0px · dasharray 4 7 · op 0.75',sw:5.0,color:'#4ead6d',dash:'4 7'},
       {label:'Dense 脉动',sub:'max(1.4,w×0.5) · op×0.6 · pulse 2.4s',sw:1.8,color:'#0c9980',dash:''},
     ];
     items.forEach(it=>{
       const div=document.createElement('div'); div.className='iso-key-item';
       div.innerHTML=`<svg class="lv" height="18" viewBox="0 0 46 18">
-        ${it.dash?'':'<line x1="2" y1="9" x2="44" y2="9" stroke="rgba(255,255,255,.55)" stroke-width="'+(it.sw+4)+'" stroke-linecap="round"/>'}
+        ${it.dash?'':'<line x1="2" y1="9" x2="44" y2="9" stroke="'+CASING+'" stroke-width="'+(it.sw+4)+'" stroke-linecap="round"/>'}
         <line x1="2" y1="9" x2="44" y2="9" stroke="${it.color}" stroke-width="${it.sw}" stroke-linecap="round"${it.dash?' stroke-dasharray="'+it.dash+'"':''} opacity="${it.color==='#4ead6d'?0.75:1}"/>
       </svg>
       <div class="lt"><b>${it.label}</b>${it.sub}</div>`;
       key.appendChild(div);
     });
   }
+  } /* /draw */
+  draw();
+  window.__redrawIso = draw;
 })();
 </script>
 
@@ -1210,13 +1237,17 @@ uFlowMix 彗星头提亮程度</pre>
   var root=document.documentElement, btn=document.getElementById('theme-toggle');
   var KEY='bw-pattern-theme';
   try{ var saved=localStorage.getItem(KEY); if(saved==='dark') root.setAttribute('data-theme','dark'); }catch(e){}
+  function redrawScene(){ if(window.__redrawIso) window.__redrawIso(); }
   function sync(){ var dark=root.getAttribute('data-theme')==='dark'; if(btn) btn.textContent=dark?'☀ 浅色':'☾ 深色'; }
   sync();
+  /* 初始若从 localStorage 恢复了深色，iso 场景在浅色下已绘制过一次，这里按当前主题重绘一次。 */
+  redrawScene();
   if(btn) btn.addEventListener('click',function(){
     var dark=root.getAttribute('data-theme')==='dark';
     if(dark) root.removeAttribute('data-theme'); else root.setAttribute('data-theme','dark');
     try{ localStorage.setItem(KEY, dark?'light':'dark'); }catch(e){}
     sync();
+    redrawScene();
   });
 })();
 </script>
