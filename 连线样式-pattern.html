@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>连线样式 Pattern 参考 · 昇腾超节点互联</title>
+<style>
+  :root{
+    /* 浅色（默认）。深色见 :root[data-theme="dark"]，仅覆盖背景/文字/描边； */
+    /* 强调色（--npu/--cpu/--sw/--d2d/--dp）两套主题共用，保证编码语义恒定。 */
+    --bg:#f4f6f9; --panel:#fff; --panel2:#f0f3f8; --panel3:#e6eaf2;
+    --ink:#1c2333; --ink2:#4c5a72; --ink3:#8896aa;
+    --line:rgba(0,15,50,.1); --line2:rgba(0,15,50,.18);
+    --npu:#0c9980; --cpu:#2563d8; --sw:#c07a0f; --d2d:#d0386e; --dp:#7050c0;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1623;  --panel:#182030;  --panel2:#111b2b;  --panel3:#0c1520;
+    --ink:#dce8f8; --ink2:#8ea4c0;   --ink3:#4a6480;
+    --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.13);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased; min-height:100vh; transition:background .25s ease,color .25s ease;}
+
+  /* ── header ── */
+  header{
+    position:sticky; top:0; z-index:40;
+    background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    padding:14px 32px; display:flex; align-items:center; gap:16px;
+  }
+  header h1{font-size:14px; font-weight:700; letter-spacing:.01em;}
+  header .sub{font-family:var(--mono); font-size:10.5px; color:var(--ink3);}
+  header .dot{width:7px;height:7px;border-radius:50%;background:var(--npu);box-shadow:0 0 7px var(--npu);}
+  .spacer{flex:1;}
+  .hbadge{font-family:var(--mono); font-size:9.5px; color:var(--ink3); border:1px solid var(--line); border-radius:6px; padding:3px 8px;}
+  button.hbadge{cursor:pointer; background:transparent; transition:color .15s,border-color .15s;}
+  button.hbadge:hover{color:var(--ink); border-color:var(--line2);}
+
+  /* ── 3D 管线（§8）── */
+  .tube-swatch{display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:10px; color:var(--ink2); padding:3px 0;}
+  .tube-swatch .chip{width:26px; height:6px; border-radius:99px; flex:none;}
+  .tube-swatch .nm{width:54px; flex:none; color:var(--ink); font-weight:700;}
+  .tube-swatch .hx{color:var(--ink3);}
+
+  /* ── layout ── */
+  .page{max-width:1100px; margin:0 auto; padding:36px 32px 72px;}
+
+  /* ── section headers ── */
+  .section-hd{
+    display:flex; align-items:baseline; gap:14px;
+    margin:44px 0 18px; padding-bottom:10px; border-bottom:1.5px solid var(--line2);
+  }
+  .section-hd h2{font-size:16px; font-weight:700;}
+  .section-hd .sh-en{font-family:var(--mono); font-size:10px; color:var(--ink3); letter-spacing:.1em; text-transform:uppercase;}
+  .section-hd .sh-note{font-size:11px; color:var(--ink3); font-family:var(--mono); margin-left:auto;}
+
+  /* ── pattern card ── */
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px;}
+  .grid.wide{grid-template-columns:1fr 1fr;}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    overflow:hidden; display:flex; flex-direction:column;
+  }
+  .card-preview{
+    background:var(--panel2); display:flex; align-items:center; justify-content:center;
+    padding:22px 16px; border-bottom:1px solid var(--line); min-height:90px;
+  }
+  .card-preview.dark{background:#1a2035;}
+  .card-body{padding:14px 16px; display:flex; flex-direction:column; gap:8px;}
+  .card-name{font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px;}
+  .card-name .en{font-family:var(--mono); font-size:9.5px; color:var(--ink3); font-weight:400;}
+  .card-desc{font-size:11.5px; color:var(--ink2); line-height:1.65;}
+  .params{display:flex; flex-direction:column; gap:3px; margin-top:2px;}
+  .param{display:flex; align-items:baseline; gap:8px; font-family:var(--mono); font-size:10px;}
+  .param .k{color:var(--ink3); width:120px; flex:none;}
+  .param .v{color:var(--ink); font-weight:600;}
+  .tag{display:inline-block; font-family:var(--mono); font-size:9px; font-weight:700;
+    padding:2px 6px; border-radius:4px; letter-spacing:.04em;}
+  .tag-a{background:rgba(12,153,128,.1); color:var(--npu); border:1px solid rgba(12,153,128,.28);}
+  .tag-b{background:rgba(37,99,216,.1); color:var(--cpu); border:1px solid rgba(37,99,216,.28);}
+  .tag-c{background:transparent; color:var(--ink3); border:1px dashed var(--line2);}
+  .tag-ac{background:transparent; color:var(--sw); border:1px dashed rgba(192,122,15,.45);}
+  .tag-ctx{background:var(--panel3); color:var(--ink2); border:1px solid var(--line);}
+
+  /* ── 带宽尺度参考 ── */
+  .bw-scale{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px 24px;}
+  .bw-row{display:flex; align-items:center; gap:14px; padding:6px 0;}
+  .bw-row + .bw-row{border-top:1px solid var(--line);}
+  .bw-label{font-family:var(--mono); font-size:11px; color:var(--ink2); width:130px; flex:none;}
+  .bw-val{font-family:var(--mono); font-size:11px; font-weight:700; color:var(--ink); width:80px; flex:none;}
+
+  /* ── 编码规则总表 ── */
+  .rules{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;}
+  .rule-card{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
+  .rule-card h4{font-size:12px; font-weight:700; margin-bottom:9px; display:flex; align-items:center; gap:7px;}
+  .rule-card h4 .icon{width:18px;height:18px; border-radius:5px; display:grid; place-items:center; font-size:10px;}
+  .rule-item{font-size:11px; color:var(--ink2); padding:4px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between;}
+  .rule-item:last-child{border-bottom:none;}
+  .rule-item b{color:var(--ink); font-family:var(--mono); font-size:10px;}
+
+  /* ── flow anim reference ── */
+  .flow-ref{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px 24px; margin-top:14px;}
+  .flow-row{display:flex; align-items:center; gap:16px; padding:8px 0; border-bottom:1px solid var(--line);}
+  .flow-row:last-child{border-bottom:none;}
+  .flow-label{font-family:var(--mono); font-size:11px; color:var(--ink2); width:160px; flex:none;}
+
+  @keyframes flowdot{0%{offset-distance:0%}100%{offset-distance:100%}}
+  @keyframes pulse-card{0%,100%{opacity:.85}50%{opacity:.45}}
+
+  /* ── 等距实战 ── */
+  .iso-wrap{border:1px solid var(--line); border-radius:13px; overflow:hidden;}
+  .iso-key{display:grid; grid-template-columns:repeat(5,1fr); gap:0; background:#0f1928; border-top:1px solid rgba(255,255,255,.08); padding:14px 20px;}
+  .iso-key-item{display:flex; align-items:center; gap:9px; padding:3px 0;}
+  .iso-key-item .lv{display:block; width:46px; flex:none;}
+  .iso-key-item .lt{font-family:var(--mono); font-size:10px; color:#8ea4c0; line-height:1.5;}
+  .iso-key-item .lt b{display:block; color:#c8d8ef; font-size:10.5px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="dot"></div>
+  <h1>连线样式 Pattern 参考 · 统一版</h1>
+  <div class="sub">昇腾超节点互联 2D 语义线 + bus-wiring 3D 管线 · 单一参考</div>
+  <div class="spacer"></div>
+  <button class="hbadge" id="theme-toggle" type="button">☾ 深色</button>
+  <div class="hbadge">v3 · 2026-06</div>
+</header>
+
+<div class="page">
+
+  <!-- ══════════════════════════════════
+       §0  2.5D 等距实战
+       ══════════════════════════════════ -->
+  <div class="section-hd" style="margin-top:0">
+    <h2>§0 · 2.5D 等距实战</h2>
+    <span class="sh-en">Isometric Context · 真实渲染</span>
+    <span class="sh-note">连线在等距投影场景中的实际形态</span>
+  </div>
+  <div class="iso-wrap">
+    <svg id="iso-demo" viewBox="0 0 1060 330" width="100%" style="display:block;"></svg>
+    <div class="iso-key" id="iso-key"></div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       §1  视觉编码原则
+       ══════════════════════════════════ -->
+  <div class="section-hd">
+    <h2>§1 视觉编码原则</h2>
+    <span class="sh-en">Encoding Rules</span>
+    <span class="sh-note">4 维度同时编码，互不干扰</span>
+  </div>
+
+  <div class="rules">
+    <div class="rule-card">
+      <h4><span class="icon" style="background:rgba(12,153,128,.12);color:#0c9980">━</span>粗细 → 带宽</h4>
+      <div class="rule-item"><span>D2D 784 GB/s</span><b>~8.5 px</b></div>
+      <div class="rule-item"><span>LQC 167 GB/s</span><b>~5.8 px</b></div>
+      <div class="rule-item"><span>UB 164 GB/s</span><b>~5.7 px</b></div>
+      <div class="rule-item"><span>UBoE 100 GB/s</span><b>~5.0 px</b></div>
+      <div class="rule-item"><span>公式</span><b>log10(bw/10)×3.8, min 1.5</b></div>
+    </div>
+    <div class="rule-card">
+      <h4><span class="icon" style="background:rgba(37,99,216,.12);color:#2563d8">⟶</span>速度 → 时延</h4>
+      <div class="rule-item"><span>D2D &lt; 10 ns</span><b>0.4 s/圈</b></div>
+      <div class="rule-item"><span>LQC &lt; 100 ns</span><b>0.8 s/圈</b></div>
+      <div class="rule-item"><span>UB &lt; 1 µs</span><b>1.4 s/圈</b></div>
+      <div class="rule-item"><span>UBoE 3–7 µs</span><b>2.8 s/圈</b></div>
+      <div class="rule-item"><span>公式</span><b>latDur = delay×scale</b></div>
+    </div>
+    <div class="rule-card">
+      <h4><span class="icon" style="background:rgba(192,122,15,.12);color:#c07a0f">◎</span>透明度 → 可信度</h4>
+      <div class="rule-item"><span>A · 官方发布</span><b>opacity 1.0</b></div>
+      <div class="rule-item"><span>B · 交叉验证</span><b>opacity 0.75</b></div>
+      <div class="rule-item"><span>C · 媒体/推算</span><b>opacity 0.45</b></div>
+      <div class="rule-item"><span>A/C · 混合</span><b>opacity 0.6</b></div>
+      <div class="rule-item"><span>C 级额外</span><b>虚线 dasharray</b></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       §2  主图连线（scene-light.js）
+       ══════════════════════════════════ -->
+  <div class="section-hd" style="margin-top:52px">
+    <h2>§2 主图连线</h2>
+    <span class="sh-en">scene-light.js · Active Edges</span>
+    <span class="sh-note">全景总览 + 节点内部钻取视图</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- 2-1 铜缆 LQC / 实线 sparse -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="60" style="overflow:visible">
+          <defs>
+            <filter id="g1" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="2.6" result="b"></feGaussianBlur>
+              <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+          </defs>
+          <!-- casing -->
+          <line x1="20" y1="30" x2="260" y2="30" stroke="rgba(255,255,255,.72)" stroke-width="10" stroke-linecap="round"></line>
+          <!-- 主线 -->
+          <line x1="20" y1="30" x2="260" y2="30" stroke="#4de8c8" stroke-width="5.8" stroke-linecap="round" filter="url(#g1)" opacity="1"></line>
+          <!-- 流动光点 -->
+          <circle r="3.2" fill="#1c2333" opacity="0.9">
+            <animateMotion dur="0.8s" repeatCount="indefinite" path="M20 30 L260 30"></animateMotion>
+          </circle>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">铜缆 LQC · 稀疏模式 <span class="en">copper / sparse</span></div>
+        <div class="card-desc">节点数 ≤30 时使用。白色衬底 (casing) 确保连线在同色节点顶面也清晰浮起。光点流动速率编码时延。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke</span><span class="v">shade(trafficColor, +0.32)</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">wForBw(bw) · LQC≈5.8px</span></div>
+          <div class="param"><span class="k">stroke-linecap</span><span class="v">round</span></div>
+          <div class="param"><span class="k">filter</span><span class="v">url(#glow) · blur=2.6</span></div>
+          <div class="param"><span class="k">casing</span><span class="v">rgba(255,255,255,.72) · w+4px</span></div>
+          <div class="param"><span class="k">flow dot r</span><span class="v">max(2.2, w×0.55)</span></div>
+          <div class="param"><span class="k">flow dur</span><span class="v">latDur(L) s/圈</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-a">L1 LQC</span></div>
+      </div>
+    </div>
+
+    <!-- 2-2 光纤 UB optical -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="60" style="overflow:visible">
+          <defs>
+            <filter id="g2" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="2.6" result="b"></feGaussianBlur>
+              <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+          </defs>
+          <line x1="20" y1="30" x2="260" y2="30" stroke="rgba(255,255,255,.72)" stroke-width="10" stroke-linecap="round"></line>
+          <line x1="20" y1="30" x2="260" y2="30" stroke="#7050c0" stroke-width="5.7" stroke-linecap="round" stroke-dasharray="7 5" filter="url(#g2)" opacity="1"></line>
+          <circle r="3.1" fill="#1c2333" opacity="0.9">
+            <animateMotion dur="1.4s" repeatCount="indefinite" path="M20 30 L260 30"></animateMotion>
+          </circle>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">光纤 UB · 光纤中距 <span class="en">optical / UB-Fabric</span></div>
+        <div class="card-desc">柜内 / 超节点内 FullMesh。虚线表征光纤介质（与铜缆实线区分）。虚线节奏 7+5 比铜缆更疏朗。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke-dasharray</span><span class="v">7 5</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">wForBw(bw) · UB≈5.7px</span></div>
+          <div class="param"><span class="k">filter</span><span class="v">url(#glow) · blur=2.6</span></div>
+          <div class="param"><span class="k">opacity</span><span class="v">credOpacity(cred)</span></div>
+          <div class="param"><span class="k">flow dur</span><span class="v">1.4 s/圈</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-ac">L2/L3 UB</span></div>
+      </div>
+    </div>
+
+    <!-- 2-3 全光长距 UBoE opticalLong -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="60" style="overflow:visible">
+          <defs>
+            <filter id="g3" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="2.6" result="b"></feGaussianBlur>
+              <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+          </defs>
+          <line x1="20" y1="30" x2="260" y2="30" stroke="rgba(255,255,255,.72)" stroke-width="9" stroke-linecap="round"></line>
+          <line x1="20" y1="30" x2="260" y2="30" stroke="#3d9954" stroke-width="5.0" stroke-linecap="round" stroke-dasharray="4 7" filter="url(#g3)" opacity="0.75"></line>
+          <circle r="3.0" fill="#1c2333" opacity="0.9">
+            <animateMotion dur="2.8s" repeatCount="indefinite" path="M20 30 L260 30"></animateMotion>
+          </circle>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">全光长距 UBoE <span class="en">opticalLong / cross-pod</span></div>
+        <div class="card-desc">超节点间集群互联。更稀疏的虚线节奏 4+7 暗示更长的物理距离。opacity=0.75 表示 B 级可信度（交叉验证）。流动最慢。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke-dasharray</span><span class="v">4 7 （更稀疏）</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">wForBw(100) ≈ 5.0 px</span></div>
+          <div class="param"><span class="k">opacity</span><span class="v">0.75 (credOpacity B)</span></div>
+          <div class="param"><span class="k">flow dur</span><span class="v">2.8 s/圈 · 最慢</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-b">L4 UBoE</span></div>
+      </div>
+    </div>
+
+    <!-- 2-4 dense 模式 -->
+    <div class="card">
+      <div class="card-preview dark" style="flex-direction:column;gap:10px">
+        <svg width="280" height="55" style="overflow:visible">
+          <!-- 密集模式：多条细线+脉动，无单独光点 -->
+          <g style="animation:pulse-card 2.4s ease-in-out infinite">
+            <line x1="20" y1="14" x2="260" y2="38" stroke="#0c9980" stroke-width="1.4" opacity="0.54"></line>
+            <line x1="20" y1="28" x2="260" y2="18" stroke="#0c9980" stroke-width="1.4" opacity="0.54"></line>
+            <line x1="20" y1="42" x2="260" y2="30" stroke="#0c9980" stroke-width="1.4" opacity="0.54"></line>
+            <line x1="80" y1="12" x2="200" y2="46" stroke="#0c9980" stroke-width="1.4" opacity="0.54"></line>
+            <line x1="60" y1="46" x2="230" y2="14" stroke="#0c9980" stroke-width="2.0" opacity="0.54"></line>
+            <line x1="100" y1="36" x2="250" y2="20" stroke="#0c9980" stroke-width="1.4" opacity="0.54"></line>
+          </g>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">密集模式 · 脉动 <span class="en">dense / pulse</span></div>
+        <div class="card-desc">节点数 &gt;30 时启用。去掉 casing 和单独光点（性能考量），全图施加 pulse 动画暗示活跃流量。线宽减半避免视觉过载。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke</span><span class="v">trafficColor（不提亮）</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">max(1.4, w×0.5)</span></div>
+          <div class="param"><span class="k">opacity</span><span class="v">credOpacity × 0.6</span></div>
+          <div class="param"><span class="k">animation</span><span class="v">pulse 2.4s ease-in-out infinite</span></div>
+          <div class="param"><span class="k">casing</span><span class="v">无</span></div>
+          <div class="param"><span class="k">glow filter</span><span class="v">无</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-c">大规模384+</span></div>
+      </div>
+    </div>
+
+    <!-- 2-5 D2D 片内 -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="60" style="overflow:visible">
+          <defs>
+            <filter id="g5" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="2.6" result="b"></feGaussianBlur>
+              <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+          </defs>
+          <line x1="60" y1="30" x2="220" y2="30" stroke="rgba(255,255,255,.72)" stroke-width="13" stroke-linecap="round"></line>
+          <line x1="60" y1="30" x2="220" y2="30" stroke="#d0386e" stroke-width="8.5" stroke-linecap="round" filter="url(#g5)" opacity="1"></line>
+          <circle r="4.7" fill="#1c2333" opacity="0.9">
+            <animateMotion dur="0.4s" repeatCount="indefinite" path="M60 30 L220 30"></animateMotion>
+          </circle>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">D2D 片内 die-to-die <span class="en">D2D / intra-die</span></div>
+        <div class="card-desc">同封装内 die-to-die 互联。带宽最高（784 GB/s）→ 最粗；时延最低（&lt;10 ns）→ 光点最快。专属品红色与所有其他层区分。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke</span><span class="v">#d0386e（专属品红）</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">wForBw(784) ≈ 8.5 px</span></div>
+          <div class="param"><span class="k">stroke-linecap</span><span class="v">round</span></div>
+          <div class="param"><span class="k">filter</span><span class="v">url(#glow) · blur=2.6</span></div>
+          <div class="param"><span class="k">flow dur</span><span class="v">0.4 s/圈 · 最快</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">scene-light.js</span><span class="tag tag-a">L0 D2D</span></div>
+      </div>
+    </div>
+
+    <!-- 2-6 hover 高亮 -->
+    <div class="card">
+      <div class="card-preview dark" style="gap:12px;flex-direction:column">
+        <div style="font-family:var(--mono);font-size:9.5px;color:#8896aa;text-align:center">正常态</div>
+        <svg width="280" height="22">
+          <defs><filter id="g6n" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.6" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs>
+          <line x1="20" y1="11" x2="260" y2="11" stroke="rgba(255,255,255,.72)" stroke-width="10" stroke-linecap="round"></line>
+          <line x1="20" y1="11" x2="260" y2="11" stroke="#4de8c8" stroke-width="5.8" stroke-linecap="round" filter="url(#g6n)"></line>
+        </svg>
+        <div style="font-family:var(--mono);font-size:9.5px;color:#8896aa;text-align:center">悬停态 (+2px)</div>
+        <svg width="280" height="26">
+          <defs><filter id="g6h" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.6" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs>
+          <line x1="20" y1="13" x2="260" y2="13" stroke="rgba(255,255,255,.72)" stroke-width="12" stroke-linecap="round"></line>
+          <line x1="20" y1="13" x2="260" y2="13" stroke="#4de8c8" stroke-width="7.8" stroke-linecap="round" filter="url(#g6h)"></line>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">悬停高亮 <span class="en">hover state</span></div>
+        <div class="card-desc">mouseover 时 stroke-width +2，mouseout 恢复 -2。同时触发右侧 detailBody 更新和 tooltip 显示。casing 不单独更新（视觉效果足够）。</div>
+        <div class="params">
+          <div class="param"><span class="k">mouseover</span><span class="v">stroke-width +2 px</span></div>
+          <div class="param"><span class="k">mouseout</span><span class="v">stroke-width -2 px (min 1)</span></div>
+          <div class="param"><span class="k">cursor</span><span class="v">crosshair</span></div>
+          <div class="param"><span class="k">副作用</span><span class="v">renderLevelDetail + showTip</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">attachEdgeEvents()</span></div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+
+  <!-- ══════════════════════════════════
+       §3  地面 & 辅助线
+       ══════════════════════════════════ -->
+  <div class="section-hd" style="margin-top:52px">
+    <h2>§3 地面 · 背景辅助线</h2>
+    <span class="sh-en">Floor Grid · Fabric Hint · Band</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- 3-1 地面网格 -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="80">
+          <defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(37,99,216,.06)"></stop><stop offset="1" stop-color="rgba(12,153,128,.04)"></stop></linearGradient></defs>
+          <rect width="280" height="80" fill="url(#fg)" rx="6"></rect>
+          <!-- 横线 -->
+          <line x1="0" y1="20" x2="280" y2="20" stroke="rgba(0,15,50,.05)" stroke-width="1"></line>
+          <line x1="0" y1="40" x2="280" y2="40" stroke="rgba(0,15,50,.05)" stroke-width="1"></line>
+          <line x1="0" y1="60" x2="280" y2="60" stroke="rgba(0,15,50,.05)" stroke-width="1"></line>
+          <!-- 竖线 -->
+          <line x1="56" y1="0" x2="56" y2="80" stroke="rgba(0,15,50,.05)" stroke-width="1"></line>
+          <line x1="112" y1="0" x2="112" y2="80" stroke="rgba(0,15,50,.05)" stroke-width="1"></line>
+          <line x1="168" y1="0" x2="168" y2="80" stroke="rgba(0,15,50,.05)" stroke-width="1"></line>
+          <line x1="224" y1="0" x2="224" y2="80" stroke="rgba(0,15,50,.05)" stroke-width="1"></line>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">地面网格 <span class="en">floor grid</span></div>
+        <div class="card-desc">等距投影地面底层，提供空间感参考。极低对比度，不抢主连线视觉焦点。背景渐变 floorgrad 由蓝→绿。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke</span><span class="v">rgba(0,15,50,.05)</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">1 px</span></div>
+          <div class="param"><span class="k">floor fill</span><span class="v">url(#floorgrad)</span></div>
+          <div class="param"><span class="k">floor stroke</span><span class="v">rgba(0,15,50,.13) · 1.2 px</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">G.floor layer</span></div>
+      </div>
+    </div>
+
+    <!-- 3-2 Fabric 背景暗示 -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="80">
+          <!-- 采样暗连线 -->
+          <line x1="40" y1="20" x2="240" y2="60" stroke="rgba(0,15,50,.05)" stroke-width="1"></line>
+          <line x1="80" y1="15" x2="200" y2="65" stroke="rgba(0,15,50,.05)" stroke-width="1"></line>
+          <line x1="130" y1="10" x2="150" y2="70" stroke="rgba(0,15,50,.05)" stroke-width="1"></line>
+          <line x1="40" y1="60" x2="240" y2="20" stroke="rgba(0,15,50,.04)" stroke-width="1"></line>
+          <line x1="60" y1="70" x2="220" y2="15" stroke="rgba(0,15,50,.04)" stroke-width="1"></line>
+          <line x1="160" y1="12" x2="100" y2="68" stroke="rgba(0,15,50,.04)" stroke-width="1"></line>
+          <line x1="20" y1="40" x2="260" y2="40" stroke="rgba(0,15,50,.04)" stroke-width="1"></line>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Fabric 背景暗示 <span class="en">background mesh hint</span></div>
+        <div class="card-desc">节点 ≤36 时画全连；&gt;36 时采样（每点取最近5邻居）。仅暗示拓扑密度，不代表实际流量路径。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke ≤36</span><span class="v">rgba(0,15,50,.05)</span></div>
+          <div class="param"><span class="k">stroke &gt;36</span><span class="v">rgba(0,15,50,.04)</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">1 px</span></div>
+          <div class="param"><span class="k">采样规则</span><span class="v">i+k (k=1..5) mod n</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">G.fabric layer</span></div>
+      </div>
+    </div>
+
+    <!-- 3-3 48TB 地址带 -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="80" style="overflow:visible">
+          <defs>
+            <filter id="gb" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="2.6" result="b"></feGaussianBlur>
+              <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+            <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#0c9980" stop-opacity=".9"></stop>
+              <stop offset="0.5" stop-color="#2563d8" stop-opacity=".9"></stop>
+              <stop offset="1" stop-color="#7050c0" stop-opacity=".9"></stop>
+            </linearGradient>
+          </defs>
+          <line x1="20" y1="44" x2="260" y2="44" stroke="url(#bg1)" stroke-width="6" stroke-linecap="round" filter="url(#gb)" opacity=".92"></line>
+          <text x="140" y="64" text-anchor="middle" font-family="monospace" font-size="9" fill="#8896aa">48 TB 统一编址 · 一条连续地址带</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">48TB 统一编址带 <span class="en">address band</span></div>
+        <div class="card-desc">横跨所有 NPU 的渐变发光带，代表 NPU 集群共享的统一地址空间。三色渐变（绿→蓝→紫）引用节点/交换/流量三色。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke</span><span class="v">url(#bandgrad) 绿→蓝→紫</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">6 px</span></div>
+          <div class="param"><span class="k">stroke-linecap</span><span class="v">round</span></div>
+          <div class="param"><span class="k">filter</span><span class="v">url(#glow) · blur=2.6</span></div>
+          <div class="param"><span class="k">opacity</span><span class="v">0.92</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">G.band layer</span></div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+
+  <!-- ══════════════════════════════════
+       §4  视图扩展连线（views-light.js）
+       ══════════════════════════════════ -->
+  <div class="section-hd" style="margin-top:52px">
+    <h2>§4 视图扩展连线</h2>
+    <span class="sh-en">views-light.js · Rack / Node / Topology</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- 4-1 节点视图 D2D -->
+    <div class="card">
+      <div class="card-preview">
+        <svg width="280" height="70" style="overflow:visible">
+          <defs>
+            <filter id="gv1" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2.5" result="b"></feGaussianBlur>
+              <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+          </defs>
+          <!-- NPU 色块 -->
+          <rect x="30" y="20" width="50" height="30" rx="4" fill="#0c9980" opacity=".9"></rect>
+          <text x="55" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">NPU 1</text>
+          <rect x="200" y="20" width="50" height="30" rx="4" fill="#0c9980" opacity=".9"></rect>
+          <text x="225" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">NPU 5</text>
+          <!-- D2D 连线 -->
+          <line x1="80" y1="35" x2="200" y2="35" stroke="#d0386e" stroke-width="2.4" filter="url(#gv1)" opacity=".85"></line>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">节点视图 D2D <span class="en">Node View · die-to-die</span></div>
+        <div class="card-desc">节点视图等距投影中，连接同列上下对 NPU（die pair）。浅色背景上用 vglow 保持发光感。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke</span><span class="v">#d0386e</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">2.4 px</span></div>
+          <div class="param"><span class="k">filter</span><span class="v">url(#vglow) · blur=2.5</span></div>
+          <div class="param"><span class="k">opacity</span><span class="v">0.85</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">views-light.js</span><span class="tag tag-a">节点视图</span></div>
+      </div>
+    </div>
+
+    <!-- 4-2 节点视图 LQC -->
+    <div class="card">
+      <div class="card-preview">
+        <svg width="280" height="70">
+          <rect x="30" y="20" width="50" height="30" rx="4" fill="#0c9980" opacity=".9"></rect>
+          <text x="55" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">NPU</text>
+          <rect x="200" y="18" width="60" height="34" rx="4" fill="#c07a0f" opacity=".9"></rect>
+          <text x="230" y="39" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">UB Fabric</text>
+          <line x1="80" y1="35" x2="200" y2="35" stroke="#2563d8" stroke-width="1.2" opacity=".35"></line>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">节点视图 LQC <span class="en">Node View · copper</span></div>
+        <div class="card-desc">NPU → UB Fabric 星形全互联。opacity 极低（0.35）作为辅助结构线，不抢 D2D 视觉焦点。不加 glow。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke</span><span class="v">#2563d8</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">1.2 px</span></div>
+          <div class="param"><span class="k">opacity</span><span class="v">0.35 · 极淡</span></div>
+          <div class="param"><span class="k">filter</span><span class="v">无</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">views-light.js</span><span class="tag tag-a">节点视图</span></div>
+      </div>
+    </div>
+
+    <!-- 4-3 机柜视图 LQC 竖线 -->
+    <div class="card">
+      <div class="card-preview">
+        <svg width="280" height="100">
+          <rect x="100" y="10" width="80" height="24" rx="4" fill="#10b899"></rect>
+          <text x="140" y="27" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">节点 2</text>
+          <rect x="100" y="42" width="80" height="24" rx="4" fill="#0c9980"></rect>
+          <text x="140" y="59" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">节点 1</text>
+          <!-- LQC 竖线 -->
+          <line x1="198" y1="22" x2="198" y2="42" stroke="#2563d8" stroke-width="2.2" stroke-linecap="round" opacity=".6"></line>
+          <text x="210" y="36" font-family="monospace" font-size="9" fill="#2563d8">LQC</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">机柜视图 LQC 竖线 <span class="en">Rack View · node connector</span></div>
+        <div class="card-desc">机柜正面图节点行之间右侧的竖向连线，表示节点间通过 LQC 铜缆互联。opacity 0.6 为辅助结构线。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke</span><span class="v">#2563d8</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">2.2 px</span></div>
+          <div class="param"><span class="k">stroke-linecap</span><span class="v">round</span></div>
+          <div class="param"><span class="k">opacity</span><span class="v">0.6</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">views-light.js</span><span class="tag tag-a">机柜视图</span></div>
+      </div>
+    </div>
+
+    <!-- 4-4 注解引线 -->
+    <div class="card">
+      <div class="card-preview">
+        <svg width="280" height="80">
+          <rect x="40" y="28" width="100" height="24" rx="4" fill="#0c9980"></rect>
+          <text x="90" y="45" text-anchor="middle" font-family="monospace" font-size="9" fill="#fff">8 × 计算节点</text>
+          <line x1="140" y1="40" x2="190" y2="40" stroke="#0c9980" stroke-width="1" stroke-dasharray="3 2" opacity=".7"></line>
+          <text x="196" y="44" font-family="monospace" font-size="10.5" fill="#0c9980">8 × 计算节点</text>
+
+          <rect x="40" y="56" width="100" height="16" rx="4" fill="#c07a0f"></rect>
+          <text x="90" y="68" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#7a4e0a">UB 交换</text>
+          <line x1="140" y1="64" x2="190" y2="64" stroke="#c07a0f" stroke-width="1" stroke-dasharray="3 2" opacity=".7"></line>
+          <text x="196" y="68" font-family="monospace" font-size="10.5" fill="#c07a0f">UB 交换</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">注解引线 <span class="en">annotation leader</span></div>
+        <div class="card-desc">机柜/拓扑视图右侧标注引线。颜色与对应层级色相同，虚线节奏 3+2 轻量，opacity 0.7 次要视觉层。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke</span><span class="v">layer.color（同层色）</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">1 px</span></div>
+          <div class="param"><span class="k">stroke-dasharray</span><span class="v">3 2</span></div>
+          <div class="param"><span class="k">opacity</span><span class="v">0.65–0.7</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">views-light.js</span><span class="tag tag-ctx">注解</span></div>
+      </div>
+    </div>
+
+    <!-- 4-5 层间分隔虚线 -->
+    <div class="card">
+      <div class="card-preview">
+        <svg width="280" height="80">
+          <rect x="40" y="10" width="200" height="24" rx="6" fill="#fff" stroke="#3d9954" stroke-width="1.5"></rect>
+          <text x="140" y="27" text-anchor="middle" font-family="monospace" font-size="9" fill="#3d9954">L4 · 超节点间</text>
+          <!-- 层间虚线 -->
+          <line x1="140" y1="34" x2="140" y2="46" stroke="rgba(0,15,50,.18)" stroke-width="1.5" stroke-dasharray="3 2"></line>
+          <rect x="40" y="46" width="200" height="24" rx="6" fill="#fff" stroke="#c07a0f" stroke-width="1.5"></rect>
+          <text x="140" y="63" text-anchor="middle" font-family="monospace" font-size="9" fill="#c07a0f">L3 · 超节点 Clos</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">层间分隔虚线 <span class="en">topology layer separator</span></div>
+        <div class="card-desc">UB 互联层级视图中，相邻层卡片之间的连接线。中性深色低调，仅传达「上下封装」关系，不代表物理连线。</div>
+        <div class="params">
+          <div class="param"><span class="k">stroke</span><span class="v">rgba(0,15,50,.18)</span></div>
+          <div class="param"><span class="k">stroke-width</span><span class="v">1.5 px</span></div>
+          <div class="param"><span class="k">stroke-dasharray</span><span class="v">3 2</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">views-light.js</span><span class="tag tag-ctx">互联层级视图</span></div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+
+  <!-- ══════════════════════════════════
+       §5  Glow Filter 规格
+       ══════════════════════════════════ -->
+  <div class="section-hd" style="margin-top:52px">
+    <h2>§5 Glow Filter 规格</h2>
+    <span class="sh-en">SVG feGaussianBlur · 三档</span>
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="60" style="overflow:visible">
+          <defs><filter id="fglow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.6" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs>
+          <line x1="20" y1="30" x2="260" y2="30" stroke="#0c9980" stroke-width="5" stroke-linecap="round" filter="url(#fglow)"></line>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">#glow <span class="en">standard glow</span></div>
+        <div class="card-desc">主图所有活跃连线、D2D、地址带的标准发光。覆盖范围 220%×220% 足够大不截断。</div>
+        <div class="params">
+          <div class="param"><span class="k">id</span><span class="v">glow</span></div>
+          <div class="param"><span class="k">stdDeviation</span><span class="v">2.6</span></div>
+          <div class="param"><span class="k">x/y/w/h</span><span class="v">-60% -60% 220% 220%</span></div>
+          <div class="param"><span class="k">使用场景</span><span class="v">scene-light.js 所有连线</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="60" style="overflow:visible">
+          <defs><filter id="fsglow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="6" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs>
+          <line x1="80" y1="30" x2="200" y2="30" stroke="#c07a0f" stroke-width="5" stroke-linecap="round" filter="url(#fsglow)"></line>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">#sglow <span class="en">strong glow</span></div>
+        <div class="card-desc">更强的发光效果，用于特别需要视觉焦点的场景（如活跃节点的 glow:true 顶面）。blur 比 #glow 大 2.3×。</div>
+        <div class="params">
+          <div class="param"><span class="k">id</span><span class="v">sglow</span></div>
+          <div class="param"><span class="k">stdDeviation</span><span class="v">6</span></div>
+          <div class="param"><span class="k">x/y/w/h</span><span class="v">-80% -80% 260% 260%</span></div>
+          <div class="param"><span class="k">使用场景</span><span class="v">chip() opts.glow=true</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-preview">
+        <svg width="280" height="60" style="overflow:visible">
+          <defs><filter id="fvglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs>
+          <line x1="20" y1="30" x2="260" y2="30" stroke="#d0386e" stroke-width="2.4" filter="url(#fvglow)" opacity=".85"></line>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">#vglow <span class="en">views glow · light bg</span></div>
+        <div class="card-desc">views-light.js 专用，浅色背景下发光。参数与 #glow 相近，但 x/y/w/h 稍小（浅色背景光晕扩散更快）。</div>
+        <div class="params">
+          <div class="param"><span class="k">id</span><span class="v">vglow</span></div>
+          <div class="param"><span class="k">stdDeviation</span><span class="v">2.5</span></div>
+          <div class="param"><span class="k">x/y/w/h</span><span class="v">-50% -50% 200% 200%</span></div>
+          <div class="param"><span class="k">使用场景</span><span class="v">节点视图 D2D 连线</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+
+  <!-- ══════════════════════════════════
+       §6  带宽 → 粗细 映射表
+       ══════════════════════════════════ -->
+  <div class="section-hd" style="margin-top:52px">
+    <h2>§6 带宽 → 粗细 映射</h2>
+    <span class="sh-en">wForBw() · log10 scale</span>
+    <span class="sh-note">公式：max(1.5, log10(bw/10) × 3.8)</span>
+  </div>
+
+  <div class="bw-scale">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--ink3);margin-bottom:12px;letter-spacing:.08em">BW (GB/s) → stroke-width (px)  ·  对数尺度</div>
+
+    <svg width="100%" height="220" style="display:block;overflow:visible">
+      <defs>
+        <filter id="gbw" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="2.6" result="b"></feGaussianBlur>
+          <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+        </filter>
+      </defs>
+
+      <!-- D2D 784 GB/s → 8.5px -->
+      <line x1="160" y1="26" x2="620" y2="26" stroke="rgba(255,255,255,.72)" stroke-width="12.5" stroke-linecap="round"></line>
+      <line x1="160" y1="26" x2="620" y2="26" stroke="#d0386e" stroke-width="8.5" stroke-linecap="round" filter="url(#gbw)"></line>
+      <text x="10" y="22" font-family="monospace" font-size="10.5" fill="#d0386e">D2D</text>
+      <text x="10" y="34" font-family="monospace" font-size="9" fill="#8896aa">784 GB/s</text>
+      <text x="630" y="30" font-family="monospace" font-size="10.5" fill="#1c2333" font-weight="600">8.5 px</text>
+
+      <!-- LQC 167 GB/s → 5.8px -->
+      <line x1="160" y1="72" x2="620" y2="72" stroke="rgba(255,255,255,.72)" stroke-width="9.8" stroke-linecap="round"></line>
+      <line x1="160" y1="72" x2="620" y2="72" stroke="#2563d8" stroke-width="5.8" stroke-linecap="round" filter="url(#gbw)"></line>
+      <text x="10" y="68" font-family="monospace" font-size="10.5" fill="#2563d8">LQC</text>
+      <text x="10" y="80" font-family="monospace" font-size="9" fill="#8896aa">167 GB/s</text>
+      <text x="630" y="76" font-family="monospace" font-size="10.5" fill="#1c2333" font-weight="600">5.8 px</text>
+
+      <!-- UB 164 GB/s → 5.7px -->
+      <line x1="160" y1="116" x2="620" y2="116" stroke="rgba(255,255,255,.72)" stroke-width="9.7" stroke-linecap="round"></line>
+      <line x1="160" y1="116" x2="620" y2="116" stroke="#7050c0" stroke-width="5.7" stroke-linecap="round" stroke-dasharray="7 5" filter="url(#gbw)"></line>
+      <text x="10" y="112" font-family="monospace" font-size="10.5" fill="#7050c0">UB Mesh</text>
+      <text x="10" y="124" font-family="monospace" font-size="9" fill="#8896aa">164 GB/s</text>
+      <text x="630" y="120" font-family="monospace" font-size="10.5" fill="#1c2333" font-weight="600">5.7 px</text>
+
+      <!-- UBoE 100 GB/s → 5.0px -->
+      <line x1="160" y1="158" x2="620" y2="158" stroke="rgba(255,255,255,.72)" stroke-width="9.0" stroke-linecap="round"></line>
+      <line x1="160" y1="158" x2="620" y2="158" stroke="#3d9954" stroke-width="5.0" stroke-linecap="round" stroke-dasharray="4 7" filter="url(#gbw)" opacity=".75"></line>
+      <text x="10" y="154" font-family="monospace" font-size="10.5" fill="#3d9954">UBoE</text>
+      <text x="10" y="166" font-family="monospace" font-size="9" fill="#8896aa">100 GB/s</text>
+      <text x="630" y="162" font-family="monospace" font-size="10.5" fill="#1c2333" font-weight="600">5.0 px</text>
+
+      <!-- card2card 40 GB/s → 3.1px -->
+      <line x1="160" y1="198" x2="620" y2="198" stroke="rgba(255,255,255,.72)" stroke-width="7.1" stroke-linecap="round"></line>
+      <line x1="160" y1="198" x2="620" y2="198" stroke="#c07a0f" stroke-width="3.1" stroke-linecap="round" filter="url(#gbw)" opacity=".45"></line>
+      <text x="10" y="194" font-family="monospace" font-size="10.5" fill="#c07a0f">Card2Card</text>
+      <text x="10" y="206" font-family="monospace" font-size="9" fill="#8896aa">40 GB/s · C级</text>
+      <text x="630" y="202" font-family="monospace" font-size="10.5" fill="#1c2333" font-weight="600">3.1 px</text>
+    </svg>
+
+    <div style="font-family:var(--mono);font-size:10px;color:var(--ink3);margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
+      实线 = 铜缆 (copper) · 短虚线 7+5 = 光纤 UB (optical) · 稀虚线 4+7 = 全光长距 (opticalLong)
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       §7  使用规则速查
+       ══════════════════════════════════ -->
+  <div class="section-hd" style="margin-top:52px">
+    <h2>§7 使用规则速查</h2>
+    <span class="sh-en">Quick Reference</span>
+  </div>
+
+  <div class="grid wide">
+    <div class="rule-card" style="border-radius:12px">
+      <h4><span class="icon" style="background:#e6eaf2">🚫</span>不可混用</h4>
+      <div class="rule-item"><span>实线 ↔ 虚线</span><b>介质区分，不可混</b></div>
+      <div class="rule-item"><span>glow 用于密集模式</span><b>性能问题，密集时关闭</b></div>
+      <div class="rule-item"><span>casing 用于密集模式</span><b>同上，密集时省略</b></div>
+      <div class="rule-item"><span>color 随意指定</span><b>必须来自 D.colors / D.parallels</b></div>
+      <div class="rule-item"><span>opacity 自定义</span><b>必须用 credOpacity(cred) 计算</b></div>
+    </div>
+    <div class="rule-card" style="border-radius:12px">
+      <h4><span class="icon" style="background:#e6eaf2">✓</span>分层规范</h4>
+      <div class="rule-item"><span>G.floor</span><b>地面网格，始终在最底层</b></div>
+      <div class="rule-item"><span>G.fabric</span><b>背景暗示，第二层</b></div>
+      <div class="rule-item"><span>G.nodes</span><b>芯片/交换机色块</b></div>
+      <div class="rule-item"><span>G.active</span><b>所有流量激活连线</b></div>
+      <div class="rule-item"><span>G.flow</span><b>流动光点（animateMotion）</b></div>
+      <div class="rule-item"><span>G.labels</span><b>文字标注，始终最顶层</b></div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-family:var(--mono);font-size:11px;color:var(--ink2);line-height:1.8">
+    <b style="color:var(--ink)">新增连线时的检查清单：</b><br>
+    ① 带宽已知 → 用 wForBw(bw) 计算粗细，不要手写 px 数<br>
+    ② 可信度已知 → 用 credOpacity(cred) 计算透明度<br>
+    ③ 介质已知 → copper=实线 · optical=dasharray:7 5 · opticalLong=dasharray:4 7<br>
+    ④ 节点数 ≤30 → sparse模式（casing + glow + 流动光点）· &gt;30 → dense模式（pulse动画）<br>
+    ⑤ 浅色背景视图 → 使用 #vglow，不用 #glow / #sglow<br>
+    ⑥ 注解引线 → dasharray:3 2 · stroke-width:1 · opacity:.65~.7 · 颜色与层色相同
+  </div>
+
+  <!-- ══════════════════════════════════
+       §8  3D 管线连线（Bus Wiring Studio）
+       ══════════════════════════════════ -->
+  <div class="section-hd" style="margin-top:52px">
+    <h2>§8 3D 管线连线</h2>
+    <span class="sh-en">bus-wiring · R3F Tube Styles</span>
+    <span class="sh-note">正交 2.5D 视角下的 three.js 圆管连线</span>
+  </div>
+
+  <div style="margin-bottom:18px;padding:13px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:11.5px;color:var(--ink2);line-height:1.75">
+    与上面的 2D SVG 语义线不同，这一组是 <b style="color:var(--ink)">bus-wiring</b> React 模块在 <span style="font-family:var(--mono)">@react-three/fiber</span> 里渲染的 <b style="color:var(--ink)">3D 圆管</b>
+    （<span style="font-family:var(--mono)">TubeGeometry + ShaderMaterial</span>），靠管体明暗 / 顶部高光 / 边缘菲涅尔 / 流动彗星营造体积感，而非 stroke 宽度。
+    四个预设是同一套连线的视觉档位，统一收录于此作对照参考。
+  </div>
+
+  <div class="grid">
+
+    <!-- 8-1 Original -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="60" style="overflow:visible">
+          <rect x="20" y="28" width="240" height="4.5" rx="2.25" fill="#5AA0FF" opacity="0.6"></rect>
+          <!-- 端点：flat stub -->
+          <circle cx="20" cy="30" r="4" fill="#5AA0FF" opacity="0.85"></circle>
+          <circle cx="20" cy="30" r="1.6" fill="#fff"></circle>
+          <circle cx="260" cy="30" r="4" fill="#5AA0FF" opacity="0.85"></circle>
+          <circle cx="260" cy="30" r="1.6" fill="#fff"></circle>
+          <circle r="2.2" fill="#fff" opacity="0.7">
+            <animateMotion dur="1.4s" repeatCount="indefinite" path="M20 30 L260 30"></animateMotion>
+          </circle>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Original · 平涂 <span class="en">flat tubes</span></div>
+        <div class="card-desc">模块原始观感：实色管体、基础彗星、简单接线柱。无明暗 / 高光 / 轮廓光，最轻量。</div>
+        <div class="params">
+          <div class="param"><span class="k">tubeR 主/支</span><span class="v">0.050 / 0.038</span></div>
+          <div class="param"><span class="k">radial 段数</span><span class="v">7</span></div>
+          <div class="param"><span class="k">corner 主/支</span><span class="v">0.28 / 0.20</span></div>
+          <div class="param"><span class="k">uShade·uRim·uGloss</span><span class="v">0 · 0 · 0</span></div>
+          <div class="param"><span class="k">uFlowLen·uFlowMix</span><span class="v">0.10 · 0.55</span></div>
+          <div class="param"><span class="k">baseAlpha</span><span class="v">0.22</span></div>
+          <div class="param"><span class="k">connector</span><span class="v">flat（柱+环+点）</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">BusRouteLine.tsx</span><span class="tag tag-c">original</span></div>
+      </div>
+    </div>
+
+    <!-- 8-2 Refined / glossy -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="60" style="overflow:visible">
+          <defs>
+            <linearGradient id="tubeRefined" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#d6e6ff"></stop>
+              <stop offset="0.4" stop-color="#5AA0FF"></stop>
+              <stop offset="1" stop-color="#294a82"></stop>
+            </linearGradient>
+            <filter id="t2b" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.4" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+          </defs>
+          <rect x="20" y="26.6" width="240" height="6.75" rx="3.4" fill="url(#tubeRefined)" opacity="0.82"></rect>
+          <circle cx="20" cy="30" r="5.3" fill="#5AA0FF" opacity="0.28"></circle>
+          <circle cx="20" cy="30" r="2.4" fill="#cfe0ff"></circle>
+          <circle cx="260" cy="30" r="5.3" fill="#5AA0FF" opacity="0.28"></circle>
+          <circle cx="260" cy="30" r="2.4" fill="#cfe0ff"></circle>
+          <circle r="3.4" fill="#fff" opacity="0.85" filter="url(#t2b)">
+            <animateMotion dur="1.0s" repeatCount="indefinite" path="M20 30 L260 30"></animateMotion>
+          </circle>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Refined · 光泽 <span class="en">glossy（默认）</span></div>
+        <div class="card-desc">玻璃质感纵向渐变（顶亮底暗）+ 干净不透明度，圆滑转角、极简接点。模块推荐默认档。</div>
+        <div class="params">
+          <div class="param"><span class="k">tubeR 主/支</span><span class="v">0.075 / 0.052</span></div>
+          <div class="param"><span class="k">radial 段数</span><span class="v">20</span></div>
+          <div class="param"><span class="k">corner 主/支</span><span class="v">0.78 / 0.58</span></div>
+          <div class="param"><span class="k">uShade·uRim·uGloss</span><span class="v">0.92 · 0.30 · 0.78</span></div>
+          <div class="param"><span class="k">uFlowLen·uFlowMix</span><span class="v">0.32 · 0.70</span></div>
+          <div class="param"><span class="k">baseAlpha</span><span class="v">0.82</span></div>
+          <div class="param"><span class="k">connector</span><span class="v">simple（盘+珠）</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">BusRouteLine.tsx</span><span class="tag tag-b">refined</span></div>
+      </div>
+    </div>
+
+    <!-- 8-3 Neon -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="60" style="overflow:visible">
+          <defs>
+            <linearGradient id="tubeNeon" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#bcd6ff"></stop>
+              <stop offset="0.4" stop-color="#6fb0ff"></stop>
+              <stop offset="1" stop-color="#3a6bb5"></stop>
+            </linearGradient>
+            <filter id="t3b" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3.4" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+            <filter id="t3c" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+          </defs>
+          <rect x="20" y="26.5" width="240" height="7" rx="3.5" fill="url(#tubeNeon)" filter="url(#t3b)" opacity="0.78"></rect>
+          <rect x="20" y="26.5" width="240" height="7" rx="3.5" fill="none" stroke="#aaccff" stroke-width="0.8" opacity="0.7"></rect>
+          <circle cx="20" cy="30" r="5.5" fill="#5AA0FF" opacity="0.32"></circle>
+          <circle cx="20" cy="30" r="2.5" fill="#eaf3ff"></circle>
+          <circle cx="260" cy="30" r="5.5" fill="#5AA0FF" opacity="0.32"></circle>
+          <circle cx="260" cy="30" r="2.5" fill="#eaf3ff"></circle>
+          <circle r="4" fill="#fff" filter="url(#t3c)">
+            <animateMotion dur="0.7s" repeatCount="indefinite" path="M20 30 L260 30"></animateMotion>
+          </circle>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Neon · 霓虹 <span class="en">neon</span></div>
+        <div class="card-desc">高饱和彗星、暖调强轮廓光、鲜艳发光。最抢眼，适合演示 / 焦点高亮场景。</div>
+        <div class="params">
+          <div class="param"><span class="k">tubeR 主/支</span><span class="v">0.078 / 0.055</span></div>
+          <div class="param"><span class="k">radial 段数</span><span class="v">18</span></div>
+          <div class="param"><span class="k">corner 主/支</span><span class="v">0.78 / 0.58</span></div>
+          <div class="param"><span class="k">uShade·uRim·uGloss</span><span class="v">0.52 · 0.85 · 0.44</span></div>
+          <div class="param"><span class="k">uFlowLen·uFlowMix</span><span class="v">0.50 · 0.92</span></div>
+          <div class="param"><span class="k">baseAlpha</span><span class="v">0.75</span></div>
+          <div class="param"><span class="k">connector</span><span class="v">simple（盘+珠）</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">BusRouteLine.tsx</span><span class="tag tag-a">neon</span></div>
+      </div>
+    </div>
+
+    <!-- 8-4 Clean -->
+    <div class="card">
+      <div class="card-preview dark">
+        <svg width="280" height="60" style="overflow:visible">
+          <defs>
+            <linearGradient id="tubeClean" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#b9d4ff"></stop>
+              <stop offset="0.42" stop-color="#5AA0FF"></stop>
+              <stop offset="1" stop-color="#335c95"></stop>
+            </linearGradient>
+          </defs>
+          <rect x="20" y="27.3" width="240" height="5.4" rx="2.7" fill="url(#tubeClean)" opacity="0.92"></rect>
+          <circle cx="20" cy="30" r="4.2" fill="#5AA0FF" opacity="0.26"></circle>
+          <circle cx="20" cy="30" r="2" fill="#fff"></circle>
+          <circle cx="260" cy="30" r="4.2" fill="#5AA0FF" opacity="0.26"></circle>
+          <circle cx="260" cy="30" r="2" fill="#fff"></circle>
+          <circle r="2.7" fill="#fff" opacity="0.75">
+            <animateMotion dur="1.2s" repeatCount="indefinite" path="M20 30 L260 30"></animateMotion>
+          </circle>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Clean · 清爽 <span class="en">clean</span></div>
+        <div class="card-desc">克制的明暗、高不透明度、极清晰的最小化端点。信息密度高时最稳，不易视觉过载。</div>
+        <div class="params">
+          <div class="param"><span class="k">tubeR 主/支</span><span class="v">0.060 / 0.044</span></div>
+          <div class="param"><span class="k">radial 段数</span><span class="v">18</span></div>
+          <div class="param"><span class="k">corner 主/支</span><span class="v">0.72 / 0.54</span></div>
+          <div class="param"><span class="k">uShade·uRim·uGloss</span><span class="v">0.74 · 0.16 · 0.44</span></div>
+          <div class="param"><span class="k">uFlowLen·uFlowMix</span><span class="v">0.22 · 0.55</span></div>
+          <div class="param"><span class="k">baseAlpha</span><span class="v">0.92</span></div>
+          <div class="param"><span class="k">connector</span><span class="v">simple（盘+珠）</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">BusRouteLine.tsx</span><span class="tag tag-c">clean</span></div>
+      </div>
+    </div>
+
+    <!-- 8-5 调色板 + 分层 -->
+    <div class="card">
+      <div class="card-preview dark" style="flex-direction:column;align-items:stretch;gap:0;padding:14px 22px">
+        <svg width="100%" height="74" style="overflow:visible" viewBox="0 0 240 74" preserveAspectRatio="none">
+          <rect x="0"   y="6"  width="240" height="6" rx="3" fill="#FFB23E"></rect>
+          <rect x="0"   y="20" width="240" height="6" rx="3" fill="#5AA0FF"></rect>
+          <rect x="0"   y="34" width="240" height="6" rx="3" fill="#B583FF"></rect>
+          <rect x="0"   y="48" width="240" height="6" rx="3" fill="#FF7A5C"></rect>
+          <rect x="0"   y="62" width="240" height="6" rx="3" fill="#3DD6A0"></rect>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">配色 + 悬浮分层 <span class="en">palette / layers</span></div>
+        <div class="card-desc">每类总线一个颜色（图例与 3D 线共用一份），每类一个悬浮层高，不同协议永不同高交叉——关键可读性技巧。</div>
+        <div class="params" style="margin-top:2px">
+          <div class="tube-swatch"><span class="chip" style="background:#FFB23E"></span><span class="nm">POWER</span><span class="hx">#FFB23E</span><span style="margin-left:auto">layerY 2.9</span></div>
+          <div class="tube-swatch"><span class="chip" style="background:#5AA0FF"></span><span class="nm">I2C</span><span class="hx">#5AA0FF</span><span style="margin-left:auto">layerY 3.45</span></div>
+          <div class="tube-swatch"><span class="chip" style="background:#B583FF"></span><span class="nm">PCIE</span><span class="hx">#B583FF</span><span style="margin-left:auto">layerY 4.0</span></div>
+          <div class="tube-swatch"><span class="chip" style="background:#FF7A5C"></span><span class="nm">SATA</span><span class="hx">#FF7A5C</span><span style="margin-left:auto">layerY 4.55</span></div>
+          <div class="tube-swatch"><span class="chip" style="background:#3DD6A0"></span><span class="nm">USB</span><span class="hx">#3DD6A0</span><span style="margin-left:auto">layerY 5.1</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">types.ts</span></div>
+      </div>
+    </div>
+
+    <!-- 8-6 着色器 uniforms -->
+    <div class="card">
+      <div class="card-preview dark" style="padding:16px">
+        <pre style="margin:0;font-family:var(--mono);font-size:9.5px;line-height:1.7;color:#9fb3d6;white-space:pre">uShade  圆柱受光明暗
+uRim    边缘菲涅尔轮廓光
+uGloss  顶部高光条
+uFlowLen 彗星拖尾长度
+uFlowMix 彗星头提亮程度</pre>
+      </div>
+      <div class="card-body">
+        <div class="card-name">升级版管体着色器 <span class="en">TUBE_FRAG uniforms</span></div>
+        <div class="card-desc">在原 DASH 实色管体上叠加：圆柱明暗 + 世界向上高光（无接缝瑕疵）+ 菲涅尔轮廓 + 柔和彗星。把这些 uniform 归零即退回 Original 平涂。</div>
+        <div class="params">
+          <div class="param"><span class="k">routing 平行间距</span><span class="v">parallelGap 0.20（原 0.14）</span></div>
+          <div class="param"><span class="k">curve 细分</span><span class="v">divisions = pts × 22（原 ×16）</span></div>
+          <div class="param"><span class="k">分层</span><span class="v">每协议独立 layerY，永不同高</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-ctx">shaders.ts</span><span class="tag tag-ctx">routing.ts</span></div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+</div><!-- /page -->
+
+
+<script>
+/* ── 等距实战场景绘制 ── */
+(function(){
+  const NS='http://www.w3.org/2000/svg';
+  const svg=document.getElementById('iso-demo');
+  if(!svg) return;
+
+  /* 投影参数 */
+  const ox=530, oy=195, ux=68, uy=34, zz=44;
+  function vp(x,y,z){ return {X:ox+(x-y)*ux, Y:oy+(x+y)*uy-(z||0)*zz}; }
+
+  /* SVG helpers */
+  function el(t,a,txt){
+    const e=document.createElementNS(NS,t);
+    if(a) for(const k in a) e.setAttribute(k,a[k]);
+    if(txt!=null) e.textContent=txt;
+    return e;
+  }
+  function shade(hex,amt){
+    let h=hex.replace('#','');
+    let r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
+    if(amt<0){r*=(1+amt);g*=(1+amt);b*=(1+amt);}
+    else{r+=(255-r)*amt;g+=(255-g)*amt;b+=(255-b)*amt;}
+    return `rgb(${r|0},${g|0},${b|0})`;
+  }
+  function pts(arr){ return arr.map(p=>p.X+','+p.Y).join(' '); }
+  function line(x1,y1,x2,y2,attrs){ return el('line',{x1,y1,x2,y2,...attrs}); }
+
+  /* Defs：glow filter + gradients */
+  const defs=el('defs');
+  // glow
+  const gf=el('filter',{id:'ig',x:'-60%',y:'-60%',width:'220%',height:'220%'});
+  const gb=el('feGaussianBlur',{stdDeviation:'2.6',result:'b'});
+  const gm=el('feMerge'); gm.appendChild(el('feMergeNode',{in:'b'})); gm.appendChild(el('feMergeNode',{in:'SourceGraphic'}));
+  gf.appendChild(gb); gf.appendChild(gm); defs.appendChild(gf);
+  // sglow (stronger)
+  const sf=el('filter',{id:'isg',x:'-80%',y:'-80%',width:'260%',height:'260%'});
+  const sb=el('feGaussianBlur',{stdDeviation:'5',result:'b'});
+  const sm=el('feMerge'); sm.appendChild(el('feMergeNode',{in:'b'})); sm.appendChild(el('feMergeNode',{in:'SourceGraphic'}));
+  sf.appendChild(sb); sf.appendChild(sm); defs.appendChild(sf);
+  // band gradient
+  const bg=el('linearGradient',{id:'ibg',x1:'0',y1:'0',x2:'1',y2:'0'});
+  [{o:'0',c:'#0c9980'},{o:'0.5',c:'#2563d8'},{o:'1',c:'#7050c0'}].forEach(s=>{ const ss=el('stop',{'offset':s.o,'stop-color':s.c,'stop-opacity':'.85'}); bg.appendChild(ss); });
+  defs.appendChild(bg);
+  svg.appendChild(defs);
+
+  /* 背景 */
+  svg.appendChild(el('rect',{width:1060,height:330,fill:'#0f1928'}));
+
+  /* 地面 */
+  const m=2.2;
+  const fa=vp(-m,-m,0),fb=vp(m,-m,0),fc=vp(m,m,0),fd=vp(-m,m,0);
+  svg.appendChild(el('polygon',{points:pts([fa,fb,fc,fd]),fill:'rgba(37,99,216,.05)',stroke:'rgba(255,255,255,.07)','stroke-width':1}));
+
+  /* 地面网格 */
+  const G_floor=el('g'); svg.appendChild(G_floor);
+  for(let i=-2;i<=2;i++){
+    const a=vp(i,-m,0),b=vp(i,m,0); G_floor.appendChild(line(a.X,a.Y,b.X,b.Y,{stroke:'rgba(255,255,255,.05)','stroke-width':1}));
+    const c=vp(-m,i,0),d=vp(m,i,0);  G_floor.appendChild(line(c.X,c.Y,d.X,d.Y,{stroke:'rgba(255,255,255,.05)','stroke-width':1}));
+  }
+
+  /* 等距芯片绘制 */
+  function chip(cx,cy,h,hw,hd,color,glow){
+    const tl=vp(cx-hw,cy-hd,h),tr=vp(cx+hw,cy-hd,h),
+          br=vp(cx+hw,cy+hd,h),bl=vp(cx-hw,cy+hd,h),
+          bl0=vp(cx-hw,cy+hd,0),br0=vp(cx+hw,cy+hd,0),tr0=vp(cx+hw,cy-hd,0);
+    const g=el('g'); svg.appendChild(g);
+    g.appendChild(el('polygon',{points:pts([bl,br,br0,bl0]),fill:shade(color,-0.52),stroke:shade(color,-0.28),'stroke-width':0.8}));
+    g.appendChild(el('polygon',{points:pts([br,tr,tr0,br0]),fill:shade(color,-0.38),stroke:shade(color,-0.18),'stroke-width':0.8}));
+    const top=el('polygon',{points:pts([tl,tr,br,bl]),fill:shade(color,0.06),stroke:color,'stroke-width':1.4});
+    if(glow) top.setAttribute('filter','url(#ig)');
+    g.appendChild(top);
+    return {X:vp(cx,cy,h).X, Y:vp(cx,cy,h).Y};
+  }
+
+  /* 节点布局: 3列×2行 */
+  const NODES=[
+    {gx:-1.5,gy:-0.7,color:'#0c9980',label:'NPU A1'},
+    {gx: 0,  gy:-0.7,color:'#0c9980',label:'NPU A2'},
+    {gx: 1.5,gy:-0.7,color:'#0c9980',label:'NPU A3'},
+    {gx:-1.5,gy: 0.7,color:'#0c9980',label:'NPU B1'},
+    {gx: 0,  gy: 0.7,color:'#0c9980',label:'NPU B2'},
+    {gx: 1.5,gy: 0.7,color:'#10b899',label:'NPU B3',glow:true},
+  ];
+
+  /* 背景 Fabric 暗示连线 */
+  const G_fab=el('g'); svg.appendChild(G_fab);
+  for(let i=0;i<NODES.length;i++) for(let j=i+1;j<NODES.length;j++){
+    const a=vp(NODES[i].gx,NODES[i].gy,0.82), b=vp(NODES[j].gx,NODES[j].gy,0.82);
+    G_fab.appendChild(line(a.X,a.Y,b.X,b.Y,{stroke:'rgba(255,255,255,.045)','stroke-width':1}));
+  }
+
+  /* 计算节点屏幕坐标 */
+  const centers = NODES.map(n=> chip(n.gx,n.gy,0.82,0.44,0.38,n.color,n.glow||false));
+
+  /* ── 连线示例 ── */
+  const G_lines=el('g'); svg.appendChild(G_lines);
+
+  /* 1. D2D: A1↔A2 (最粗,品红) */
+  G_lines.appendChild(line(centers[0].X,centers[0].Y,centers[1].X,centers[1].Y,{stroke:'rgba(255,255,255,.65)','stroke-width':13,'stroke-linecap':'round'}));
+  const d2d=line(centers[0].X,centers[0].Y,centers[1].X,centers[1].Y,{stroke:'#d0386e','stroke-width':8.5,'stroke-linecap':'round',filter:'url(#ig)',opacity:1});
+  G_lines.appendChild(d2d);
+
+  /* 2. LQC 铜缆 sparse: A2↔A3 (实线+casing+流动光点) */
+  G_lines.appendChild(line(centers[1].X,centers[1].Y,centers[2].X,centers[2].Y,{stroke:'rgba(255,255,255,.65)','stroke-width':10,'stroke-linecap':'round'}));
+  const lqc=line(centers[1].X,centers[1].Y,centers[2].X,centers[2].Y,{stroke:'#4de8c8','stroke-width':5.8,'stroke-linecap':'round',filter:'url(#ig)',opacity:1});
+  G_lines.appendChild(lqc);
+
+  /* 3. 光纤 UB optical: A1↔B1 (短虚线7+5) */
+  G_lines.appendChild(line(centers[0].X,centers[0].Y,centers[3].X,centers[3].Y,{stroke:'rgba(255,255,255,.55)','stroke-width':9.7,'stroke-linecap':'round'}));
+  const opt=line(centers[0].X,centers[0].Y,centers[3].X,centers[3].Y,{stroke:'#9b7ce8','stroke-width':5.7,'stroke-linecap':'round','stroke-dasharray':'7 5',filter:'url(#ig)',opacity:1});
+  G_lines.appendChild(opt);
+
+  /* 4. 全光 UBoE opticalLong: B2↔B3 (稀虚线4+7,B级透明) */
+  G_lines.appendChild(line(centers[4].X,centers[4].Y,centers[5].X,centers[5].Y,{stroke:'rgba(255,255,255,.5)','stroke-width':9,'stroke-linecap':'round'}));
+  const ubo=line(centers[4].X,centers[4].Y,centers[5].X,centers[5].Y,{stroke:'#4ead6d','stroke-width':5.0,'stroke-linecap':'round','stroke-dasharray':'4 7',filter:'url(#ig)',opacity:0.75});
+  G_lines.appendChild(ubo);
+
+  /* 5. Dense 模式暗示: B1↔B2 (细+脉动) */
+  const dns=el('g',{style:'animation:pulse-card 2.4s ease-in-out infinite'});
+  dns.appendChild(line(centers[3].X,centers[3].Y,centers[4].X,centers[4].Y,{stroke:'#0c9980','stroke-width':1.8,opacity:0.52}));
+  G_lines.appendChild(dns);
+
+  /* 6. 地址带: 贯穿底部 */
+  const e1=vp(-m,m+0.15,0),e2=vp(m,m+0.15,0);
+  G_lines.appendChild(line(e1.X,e1.Y+7,e2.X,e2.Y+7,{stroke:'url(#ibg)','stroke-width':6,'stroke-linecap':'round',filter:'url(#ig)',opacity:.88}));
+
+  /* 流动光点 */
+  const G_flow=el('g'); svg.appendChild(G_flow);
+  function flowDot(ax,ay,bx,by,dur,r,color){
+    const d=el('circle',{r,fill:color,opacity:0.9});
+    const mo=el('animateMotion',{dur:dur+'s',repeatCount:'indefinite',path:`M${ax} ${ay} L${bx} ${by}`});
+    d.appendChild(mo); G_flow.appendChild(d);
+  }
+  flowDot(centers[0].X,centers[0].Y,centers[1].X,centers[1].Y,0.4,4.7,'#1a2a3a'); // D2D 最快
+  flowDot(centers[1].X,centers[1].Y,centers[2].X,centers[2].Y,0.8,3.2,'#1a2a3a'); // LQC
+  flowDot(centers[0].X,centers[0].Y,centers[3].X,centers[3].Y,1.4,3.1,'#1a2a3a'); // optical
+
+  /* 节点标签 */
+  const G_labels=el('g'); svg.appendChild(G_labels);
+  NODES.forEach((n,i)=>{
+    const p=vp(n.gx,n.gy,0.82);
+    G_labels.appendChild(el('text',{x:p.X,y:p.Y+4,'text-anchor':'middle','font-family':'var(--mono)','font-size':9.5,fill:'#fff','font-weight':600},n.label));
+  });
+
+  /* 连线标注气泡 */
+  function badge(x,y,text,color,dark){
+    const bg2=dark?'#0f1928':'rgba(255,255,255,.92)';
+    const g=el('g');
+    const r=el('rect',{x:x-4,y:y-13,width:text.length*7+8,height:18,rx:5,fill:bg2,stroke:color,'stroke-width':1.2});
+    const t=el('text',{x:x+text.length*3.5,y:y,'text-anchor':'middle','font-family':'var(--mono)','font-size':10,'font-weight':700,fill:color},text);
+    g.appendChild(r); g.appendChild(t); G_labels.appendChild(g);
+  }
+
+  const lqcMid={ X:(centers[1].X+centers[2].X)/2, Y:(centers[1].Y+centers[2].Y)/2-14 };
+  const d2dMid={ X:(centers[0].X+centers[1].X)/2, Y:(centers[0].Y+centers[1].Y)/2-14 };
+  const optMid={ X:(centers[0].X+centers[3].X)/2-20, Y:(centers[0].Y+centers[3].Y)/2 };
+  const uboMid={ X:(centers[4].X+centers[5].X)/2, Y:(centers[4].Y+centers[5].Y)/2-14 };
+  badge(d2dMid.X, d2dMid.Y,'D2D 8.5px','#d0386e',true);
+  badge(lqcMid.X, lqcMid.Y,'LQC 5.8px','#4de8c8',true);
+  badge(optMid.X, optMid.Y,'UB optical','#9b7ce8',true);
+  badge(uboMid.X, uboMid.Y,'UBoE 0.75op','#4ead6d',true);
+
+  /* 图例 key */
+  const key=document.getElementById('iso-key');
+  if(key){
+    const items=[
+      {label:'D2D 片内',sub:'8.5px · 实线 · #d0386e · dur 0.4s',sw:8.5,color:'#d0386e',dash:''},
+      {label:'LQC 铜缆',sub:'5.8px · 实线+casing · dur 0.8s',sw:5.8,color:'#4de8c8',dash:''},
+      {label:'光纤 UB',sub:'5.7px · dasharray 7 5 · dur 1.4s',sw:5.7,color:'#9b7ce8',dash:'7 5'},
+      {label:'全光 UBoE',sub:'5.0px · dasharray 4 7 · op 0.75',sw:5.0,color:'#4ead6d',dash:'4 7'},
+      {label:'Dense 脉动',sub:'max(1.4,w×0.5) · op×0.6 · pulse 2.4s',sw:1.8,color:'#0c9980',dash:''},
+    ];
+    items.forEach(it=>{
+      const div=document.createElement('div'); div.className='iso-key-item';
+      div.innerHTML=`<svg class="lv" height="18" viewBox="0 0 46 18">
+        ${it.dash?'':'<line x1="2" y1="9" x2="44" y2="9" stroke="rgba(255,255,255,.55)" stroke-width="'+(it.sw+4)+'" stroke-linecap="round"/>'}
+        <line x1="2" y1="9" x2="44" y2="9" stroke="${it.color}" stroke-width="${it.sw}" stroke-linecap="round"${it.dash?' stroke-dasharray="'+it.dash+'"':''} opacity="${it.color==='#4ead6d'?0.75:1}"/>
+      </svg>
+      <div class="lt"><b>${it.label}</b>${it.sub}</div>`;
+      key.appendChild(div);
+    });
+  }
+})();
+</script>
+
+
+
+
+<script>
+/* ── 明 / 暗主题切换（合并原 light + dark 两版）── */
+(function(){
+  var root=document.documentElement, btn=document.getElementById('theme-toggle');
+  var KEY='bw-pattern-theme';
+  try{ var saved=localStorage.getItem(KEY); if(saved==='dark') root.setAttribute('data-theme','dark'); }catch(e){}
+  function sync(){ var dark=root.getAttribute('data-theme')==='dark'; if(btn) btn.textContent=dark?'☀ 浅色':'☾ 深色'; }
+  sync();
+  if(btn) btn.addEventListener('click',function(){
+    var dark=root.getAttribute('data-theme')==='dark';
+    if(dark) root.removeAttribute('data-theme'); else root.setAttribute('data-theme','dark');
+    try{ localStorage.setItem(KEY, dark?'light':'dark'); }catch(e){}
+    sync();
+  });
+})();
+</script>
+
+</body></html>
